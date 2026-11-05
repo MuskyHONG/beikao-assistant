@@ -89,7 +89,7 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
       const changed = await client.query('UPDATE users SET password_hash=$1 WHERE id=$2 AND password_hash=$3', [hash,actor.id,original]);
       if (!changed.rowCount) throw new HttpError(409, 'password_changed');
       await client.query('DELETE FROM sessions WHERE user_id=$1', [actor.id]);
-      await client.query("INSERT INTO audit_events(actor_id,entity_type,entity_id,action) VALUES($1,'user',$1,'change_password')", [actor.id]);
+      await client.query("INSERT INTO audit_events(actor_id,entity_type,entity_id,action) VALUES($1,'user',$2,'change_password')", [actor.id,actor.id]);
       await client.query('COMMIT');
     } catch (error) { await client.query('ROLLBACK'); throw error; }
     finally { client.release(); }
