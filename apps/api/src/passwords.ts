@@ -1,6 +1,7 @@
 import { randomBytes, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 
-const parameters = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
+// OWASP scrypt profile: N=2^16, r=8, p=2; bounded per-operation memory.
+const parameters = { N: 65536, r: 8, p: 2, maxmem: 128 * 1024 * 1024 };
 function derive(password: string, salt: string): Promise<Buffer> {
   return new Promise((resolve, reject) => scrypt(password, salt, 64, parameters, (error, key) => error ? reject(error) : resolve(key)));
 }

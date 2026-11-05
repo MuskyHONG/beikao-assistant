@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { App } from './App.jsx';
 import { Accounts } from './Accounts';
 import { Login } from './Login';
@@ -9,6 +9,7 @@ export function ProductionApp() {
   const [session, setSession] = useState<Session | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
   const [learnerBank, setLearnerBank] = useState<BankItem[] | null>(null), [adminBank, setAdminBank] = useState<BankItem[]>([]);
   const [passwordDialog,setPasswordDialog]=useState(false);
+  const bankGeneration=useRef(0);
   const acceptSession = useCallback((value: Session) => { api.csrf = value.csrfToken; setSession(value); setError(''); }, []);
   useEffect(() => {
     let active = true;
@@ -19,8 +20,9 @@ export function ProductionApp() {
   }, [acceptSession]);
   const refresh = useCallback(async () => {
     if (!session) return;
+    const generation=++bankGeneration.current;
     const [learners, admins] = await Promise.all([loadBank(), session.user.role === 'learner' ? Promise.resolve([]) : loadBank(true)]);
-    if (api.csrf !== session.csrfToken) return;
+    if (api.csrf !== session.csrfToken || generation!==bankGeneration.current) return;
     setLearnerBank(learners); setAdminBank(admins); setError('');
   }, [session]);
   useEffect(() => {

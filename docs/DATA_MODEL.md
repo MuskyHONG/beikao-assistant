@@ -1,8 +1,12 @@
 # 数据模型规划
 
-以下是待业务接入时逐步落地的模型。当前数据库实际仅包含 schema_migrations 和 app_metadata，不能据此文档认为业务表已建成。
+v0.2实际表：schema_migrations、app_metadata、users、sessions、questions、question_revisions、question_publications、audit_events。其余为后续规划。
 
-所有业务主键使用 UUID；时间戳使用 timestamptz。考试目标保留 date、时区和是否含考试当天，避免把本地日期转换成 UTC 后偏移。列表采用游标分页与组合索引，分值使用 numeric，不采用浮点累计。
+questions以稳定text题号兼容原型及维护生成ID，current_version/published_version分别指向不可变修订，lock_version每次保存/发布/下架递增。kind/topic/parentId和题型字段在JSONB content中保存，可分别保留草稿与发布版本关系；服务端在串行事务验证父题、主题与可见性，无删除接口。本期知识主题仍由三类固定教学结构提供，未建topics表。
+
+question_publications保留曾发布版本；question_revisions触发器禁止UPDATE/DELETE。写请求expectedRevision必须等于lock_version，否则409。学员作答前响应为显式白名单，不能直接返回content。
+
+用户主键为UUID，题目为稳定text号，时间戳为timestamptz。以下个人目标、练习与试卷表尚未建成：日期保留date和时区；列表游标分页；未来正式总分采用numeric，不以浮点累计。
 
 | 表 | 核心字段/关联 | 约束及索引 |
 |---|---|---|

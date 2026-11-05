@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 const password='E2E.Only.Password.123';
-async function login(page:Page,email:string){
-  await page.goto('/#/home');await page.getByLabel('邮箱',{exact:true}).fill(email);await page.getByLabel('密码',{exact:true}).fill(password);await page.getByRole('button',{name:'登录',exact:true}).click();await expect(page.getByRole('button',{name:'退出登录'})).toBeVisible();
+async function login(page:Page,email:string,loginPassword=password){
+  await page.goto('/#/home');await page.getByLabel('邮箱',{exact:true}).fill(email);await page.getByLabel('密码',{exact:true}).fill(loginPassword);await page.getByRole('button',{name:'登录',exact:true}).click();await expect(page.getByRole('button',{name:'退出登录'})).toBeVisible();
 }
 test('administrator publishes four types; another account practices and sees versioned updates',async({browser})=>{
   const options={baseURL:process.env.E2E_BASE_URL??'http://127.0.0.1:8080',viewport:{width:1440,height:1000}};
@@ -56,6 +56,9 @@ test('administrator publishes four types; another account practices and sees ver
     await expect(learner.locator('.reference-panel')).toHaveCount(0);await expect(learner.getByRole('heading',{name:'这道题的练习记录'})).toBeVisible();
     // Separate browser contexts do not reuse the learner's local mastery record.
     await admin.goto('/#/practice');await expect(admin.getByRole('button',{name:/端到端-choice/})).toContainText('未接触');
+    await learner.getByRole('button',{name:'修改密码',exact:true}).click();
+    await learner.getByLabel('当前密码',{exact:true}).fill(password);await learner.getByLabel('新密码',{exact:true}).fill('New.E2E.Password.456');await learner.getByLabel('再次输入新密码',{exact:true}).fill('New.E2E.Password.456');await learner.getByRole('button',{name:'确认修改',exact:true}).click();await expect(learner.getByRole('heading',{name:'登录学习空间'})).toBeVisible();
+    await login(learner,'learner@e2e.test','New.E2E.Password.456');
     await learner.getByRole('button',{name:'退出登录',exact:true}).click();await expect(learner.getByRole('heading',{name:'登录学习空间'})).toBeVisible();
   }finally{await adminContext.close();await learnerContext.close();}
 });

@@ -111,6 +111,17 @@ test('real PostgreSQL: accounts, CSRF, roles, immutable publishing and learner c
       await pool.query("UPDATE sessions SET expires_at=now()-interval '1 hour'");
       assert.equal((await app.inject({url:'/api/v1/auth/me',headers:headers(adminSession)})).statusCode,401);
     });
+    await t.test('password changes revoke old sessions; HTTPS sessions use Secure cookies', async()=>{
+      const root=await login('admin@example.test','127.0.0.3');
+      const created=await app.inject({method:'POST',url:'/api/v1/admin/users',headers:headers(root),payload:{email:'password@example.test',displayName:'改密测试',password,role:'learner'}});assert.equal(created.statusCode,201);
+      const old=await login('password@example.test','127.0.0.3'),newPassword='New.Synthetic.Password.456';
+      assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/password',headers:headers(old),payload:{currentPassword:'wrong',newPassword}})).statusCode,401);
+      assert.equal((await app.inject({url:'/api/v1/auth/me',headers:headers(old)})).statusCode,200);
+      assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/password',headers:headers(old),payload:{currentPassword:password,newPassword}})).statusCode,200);
+      assert.equal((await app.inject({url:'/api/v1/auth/me',headers:headers(old)})).statusCode,401);
+      const secure=buildApp({pool,auth:{origin:'https://test.local',secureCookies:true,sessionHours:24},ready:()=>checkDatabase(pool),version:'0.2.0-alpha.1'});
+      try{const response=await secure.inject({method:'POST',url:'/api/v1/auth/login',headers:{origin:'https://test.local'},payload:{email:'password@example.test',password:newPassword}});assert.equal(response.statusCode,200);assert.match(response.headers['set-cookie'] as string,/; Secure/i);}finally{await secure.close();}
+    });
     await t.test('login attempts are rate limited and use generic credential failures', async () => {
       for(let n=0;n<10;n++)assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/login',remoteAddress:'127.0.0.9',headers:{origin},payload:{email:'nonexistent@example.test',password:'bad'}})).statusCode,401);
       assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/login',remoteAddress:'127.0.0.9',headers:{origin},payload:{email:'nonexistent@example.test',password:'bad'}})).statusCode,429);
