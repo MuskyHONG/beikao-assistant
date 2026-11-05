@@ -10,4 +10,4 @@ RUN npm run build -w @beikao/web
 FROM nginxinc/nginx-unprivileged:stable-alpine
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
-EXPOSE 8080
+EXPOSE 43128

@@ -1,0 +1,25 @@
+name: beikao-assistant-tests
+services:
+  test-db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: beikao_test
+      POSTGRES_DB: beikao_test
+      POSTGRES_PASSWORD: isolated_test_only
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  tests:
+    build:
+      context: .
+      dockerfile: deploy/test.Dockerfile
+    environment:
+      TEST_DATABASE_URL: postgresql://beikao_test:isolated_test_only@test-db:5432/beikao_test
+    depends_on:
+      test-db:
+        condition: service_healthy
+    command: [sh, -c, 'npm audit --audit-level=high && npm run check && npm test && npm run build && npm run test:db']

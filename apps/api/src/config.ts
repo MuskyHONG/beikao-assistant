@@ -1,5 +1,5 @@
 export function readConfig(env: NodeJS.ProcessEnv) {
-  const port = Number(env.PORT ?? 3000);
+  const port = Number(env.PORT ?? 43127);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
   const databaseUrl = env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is required');
@@ -9,7 +9,7 @@ export function readConfig(env: NodeJS.ProcessEnv) {
   } catch { throw new Error('DATABASE_URL must be a PostgreSQL URL'); }
   const logLevel = env.LOG_LEVEL ?? 'info';
   if (!['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'].includes(logLevel)) throw new Error('Invalid LOG_LEVEL');
-  const origin = env.APP_ORIGIN ?? 'http://127.0.0.1:4174';
+  const origin = env.APP_ORIGIN ?? 'http://127.0.0.1:43126';
   let url: URL;
   try { url = new URL(origin); if (!['http:','https:'].includes(url.protocol) || url.origin !== origin || url.username || url.password) throw new Error(); }
   catch { throw new Error('APP_ORIGIN must be an exact HTTP/HTTPS origin without a trailing slash'); }

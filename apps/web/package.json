@@ -1,12 +1,12 @@
 {
   "name": "@beikao/web",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0-alpha.2",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 4174",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4174",
+    "preview": "vite preview",
     "check": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
   },

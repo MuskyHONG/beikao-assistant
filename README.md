@@ -2,7 +2,7 @@
 
 面向备考用户的学习与题目练习工具，另设维护工作台。根据已确认的网页原型逐步建设可独立部署的服务。
 
-**当前版本：v0.2.0-alpha.1（身份权限与共享题库）。** 登录、账号管理、题目版本与发布、客观答案核对已连接 PostgreSQL。备考目标、个人练习、模拟答卷仍保存在当前浏览器，尚未云同步；时政融合仍是未核验草稿预览。
+**当前版本：v0.2.0-alpha.2（身份权限与共享题库）。** 登录、账号管理、题目版本与发布、客观答案核对已连接 PostgreSQL。备考目标、个人练习、模拟答卷仍保存在当前浏览器，尚未云同步；时政融合仍是未核验草稿预览。
 
 ## 技术栈
 
@@ -26,7 +26,7 @@
 ## 服务器启动
 
 ```sh
-git clone --branch v0.2.0-alpha.1 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch v0.2.0-alpha.2 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 cd beikao-assistant
 cp .env.example .env
 ```
@@ -42,7 +42,9 @@ docker compose exec -T api node apps/api/dist/seed-demo.js
 
 ## 开发与验证
 
-Node.js24、npm11及单独PostgreSQL开发库。根.env填入开发DATABASE_URL，APP_ORIGIN=http://127.0.0.1:4174，TRUST_PROXY_HOPS=0。
+默认开发网页43126、API43127、Docker部署网页入口43128。不会使用3000或8765，端口占用时不自动跳到其他端口。服务器部署与测试可只安装Docker，无需在宿主机安装Node/PostgreSQL。
+
+Node.js24、npm11及单独PostgreSQL开发库。根.env填入开发DATABASE_URL，APP_ORIGIN=http://127.0.0.1:43126，TRUST_PROXY_HOPS=0。
 
 ```sh
 npm ci
@@ -53,7 +55,7 @@ npm run dev:api
 npm run dev:web
 ```
 
-访问 http://127.0.0.1:4174。后端不可用时显示错误，不降级到可随意修改的本机题库。
+访问 http://127.0.0.1:43126。后端不可用时显示错误，不降级到可随意修改的本机题库。
 
 ```sh
 npm run check
@@ -64,6 +66,8 @@ npm run test:db
 # 需隔离Docker栈及合成测试账号，禁止对业务库执行
 npm run test:e2e
 ```
+
+在服务器跑隔离的完整单元/构建/数据库测试：`bash scripts/test-server.sh`，不映射宿主端口、不接业务数据库。实际拉取、初始化管理员、SSH访问和运行验收见[部署说明](docs/DEPLOY.md)。
 
 apps/web为前端；apps/api为后端、迁移、样例与初始化工具；deploy为容器配置；e2e为真实浏览器跨账号测试。
 

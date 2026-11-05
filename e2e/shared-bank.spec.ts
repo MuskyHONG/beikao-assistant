@@ -4,7 +4,7 @@ async function login(page:Page,email:string,loginPassword=password){
   await page.goto('/#/home');await page.getByLabel('邮箱',{exact:true}).fill(email);await page.getByLabel('密码',{exact:true}).fill(loginPassword);await page.getByRole('button',{name:'登录',exact:true}).click();await expect(page.getByRole('button',{name:'退出登录'})).toBeVisible();
 }
 test('administrator publishes four types; another account practices and sees versioned updates',async({browser})=>{
-  const options={baseURL:process.env.E2E_BASE_URL??'http://127.0.0.1:8080',viewport:{width:1440,height:1000}};
+  const options={baseURL:process.env.E2E_BASE_URL??'http://127.0.0.1:43128',viewport:{width:1440,height:1000}};
   const adminContext=await browser.newContext(options), learnerContext=await browser.newContext(options);
   const admin=await adminContext.newPage(), learner=await learnerContext.newPage();
   try{
