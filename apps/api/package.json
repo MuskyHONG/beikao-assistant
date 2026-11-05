@@ -1,0 +1,22 @@
+{
+  "name": "@beikao/api",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/server.ts",
+    "build": "tsc",
+    "check": "tsc -p tsconfig.check.json --noEmit",
+    "test": "node --import tsx --test tests/app.test.ts tests/config.test.ts",
+    "test:db": "node --env-file-if-exists=../../.env --import tsx --test tests/database.integration.test.ts",
+    "start": "node dist/server.js",
+    "migrate": "node --env-file-if-exists=../../.env --import tsx src/migrate.ts"
+  },
+  "dependencies": { "fastify": "^5.6.2", "pg": "^8.16.3" },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

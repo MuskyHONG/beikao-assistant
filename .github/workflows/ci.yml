@@ -1,0 +1,87 @@
+name: CI
+on:
+  push:
+    branches: [main, 'codex/**', 'feature/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: beikao_test
+          POSTGRES_PASSWORD: ci_ephemeral_only
+          POSTGRES_DB: beikao_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U beikao_test -d beikao_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:db
+        env:
+          TEST_DATABASE_URL: postgresql://beikao_test:ci_ephemeral_only@127.0.0.1:5432/beikao_test
+
+  containers:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      POSTGRES_PASSWORD: 6facd510972f734e101a092ff7867781a6fabed55b008786762d5a62b98e7e1c
+      HTTP_PORT: '8080'
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -p beikao-ci up -d --build
+      - name: Verify proxied API and frontend
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/api/v1/health/ready; then
+              curl --fail --silent http://127.0.0.1:8080/api/v1/version
+              curl --fail --silent http://127.0.0.1:8080/ | grep -q '备考有方'
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - if: failure()
+        run: docker compose -p beikao-ci logs --tail 100
+      - if: always()
+        run: docker compose -p beikao-ci down -v
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [checks, containers]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package tagged source and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          mkdir -p release
+          git archive --format=tar.gz --prefix="beikao-assistant-${RELEASE_TAG}/" -o "release/beikao-assistant-${RELEASE_TAG}.tar.gz" HEAD
+          (cd release && sha256sum *.tar.gz > SHA256SUMS.txt)
+          prerelease=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then prerelease+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" release/* --verify-tag --title "备考有方 $RELEASE_TAG" --notes-file CHANGELOG.md "${prerelease[@]}"

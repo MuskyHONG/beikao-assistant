@@ -1,0 +1,17 @@
+{
+  "name": "beikao-assistant",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24 <25", "npm": ">=11 <12" },
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:web": "npm run dev -w @beikao/web",
+    "dev:api": "npm run dev -w @beikao/api",
+    "build": "npm run build --workspaces",
+    "check": "npm run check --workspaces && node scripts/check-version.mjs",
+    "test": "npm run test --workspaces",
+    "test:db": "npm run test:db -w @beikao/api",
+    "db:migrate": "npm run migrate -w @beikao/api"
+  }
+}
