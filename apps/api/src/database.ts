@@ -9,4 +9,6 @@ export async function checkDatabase(pool: pg.Pool) {
   // A live database without the initial migration is deliberately not ready.
   const result = await pool.query("SELECT value FROM app_metadata WHERE key = 'schema_stage'");
   if (result.rows[0]?.value !== 'engineering-foundation') throw new Error('Schema not ready');
+  await pool.query('SELECT id FROM users LIMIT 0');
+  await pool.query('SELECT id FROM questions LIMIT 0');
 }

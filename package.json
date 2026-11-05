@@ -1,17 +1,29 @@
 {
   "name": "beikao-assistant",
-  "version": "0.1.0-alpha.1",
+  "version": "0.2.0-alpha.1",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24 <25", "npm": ">=11 <12" },
-  "workspaces": ["apps/*"],
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev:web": "npm run dev -w @beikao/web",
     "dev:api": "npm run dev -w @beikao/api",
     "build": "npm run build --workspaces",
-    "check": "npm run check --workspaces && node scripts/check-version.mjs",
+    "check": "npm run check --workspaces && tsc -p tsconfig.e2e.json && node scripts/check-version.mjs",
     "test": "npm run test --workspaces",
     "test:db": "npm run test:db -w @beikao/api",
-    "db:migrate": "npm run migrate -w @beikao/api"
+    "db:migrate": "npm run migrate -w @beikao/api",
+    "db:bootstrap": "npm run bootstrap -w @beikao/api",
+    "account:reset-password": "npm run reset-password -w @beikao/api",
+    "test:e2e": "playwright test",
+    "db:seed-demo": "npm run seed-demo -w @beikao/api"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }

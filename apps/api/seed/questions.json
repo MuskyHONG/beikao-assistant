@@ -1,0 +1,332 @@
+[
+  {
+    "id": "g1",
+    "topic": "organization",
+    "type": "简答",
+    "title": "学校组织管理，需要先想清楚哪几件事？",
+    "prompt": "请从权责、信息传递和部门协作等角度，说明学校组织管理需要考虑的关键问题。",
+    "variants": [
+      {
+        "id": "g1v1",
+        "type": "简答",
+        "title": "两套任务要求，怎样让部门重新协同？",
+        "prompt": "某校推进跨学科项目，教务处与年级组分别布置任务，教师反映要求重复、评价标准不一致。请分析问题并提出可执行的改进措施。",
+        "points": [
+          "明确牵头负责人及部门决策、执行边界。",
+          "形成统一任务清单，避免重复布置。",
+          "建立信息沟通与部门协作机制。",
+          "统一评价标准并跟踪教师反馈。"
+        ],
+        "sourceType": "教学编题",
+        "sourceUrl": "",
+        "status": "published",
+        "version": 1,
+        "kind": "short",
+        "max": 5,
+        "topic": "organization",
+        "priority": "A",
+        "referenceAnswer": "明确牵头负责人及部门决策、执行边界。\n形成统一任务清单，避免重复布置。\n建立信息沟通与部门协作机制。\n统一评价标准并跟踪教师反馈。",
+        "explanation": ""
+      },
+      {
+        "id": "g1v2",
+        "type": "简答",
+        "title": "扁平化管理是否意味着取消所有层级？",
+        "prompt": "结合学校管理实际，论述扁平化组织的适用条件与可能面临的问题。",
+        "points": [
+          "扁平化是减少不必要层级，不等于取消所有层级。",
+          "分析信息传递与响应效率的变化。",
+          "说明管理幅度、职责边界与协调负担。",
+          "结合学校规模和任务说明适用条件。"
+        ],
+        "sourceType": "教学编题",
+        "sourceUrl": "",
+        "status": "published",
+        "version": 1,
+        "kind": "short",
+        "max": 5,
+        "topic": "organization",
+        "priority": "A",
+        "referenceAnswer": "扁平化是减少不必要层级，不等于取消所有层级。\n分析信息传递与响应效率的变化。\n说明管理幅度、职责边界与协调负担。\n结合学校规模和任务说明适用条件。",
+        "explanation": ""
+      }
+    ],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "S",
+    "max": 5,
+    "points": [
+      "权：谁有决策权，授权边界是什么。",
+      "责：谁对结果负责，避免空白与重复。",
+      "沟：信息及时准确传递，统一工作口径。",
+      "协：部门共享资源，共同完成任务。",
+      "督：检查效果、收集反馈、及时纠偏。"
+    ],
+    "referenceAnswer": "权：谁有决策权，授权边界是什么。\n责：谁对结果负责，避免空白与重复。\n沟：信息及时准确传递，统一工作口径。\n协：部门共享资源，共同完成任务。\n督：检查效果、收集反馈、及时纠偏。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "id": "g1v1",
+    "type": "简答",
+    "title": "两套任务要求，怎样让部门重新协同？",
+    "prompt": "某校推进跨学科项目，教务处与年级组分别布置任务，教师反映要求重复、评价标准不一致。请分析问题并提出可执行的改进措施。",
+    "points": [
+      "明确牵头负责人及部门决策、执行边界。",
+      "形成统一任务清单，避免重复布置。",
+      "建立信息沟通与部门协作机制。",
+      "统一评价标准并跟踪教师反馈。"
+    ],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "max": 5,
+    "topic": "organization",
+    "priority": "A",
+    "referenceAnswer": "明确牵头负责人及部门决策、执行边界。\n形成统一任务清单，避免重复布置。\n建立信息沟通与部门协作机制。\n统一评价标准并跟踪教师反馈。",
+    "explanation": "",
+    "parentId": "g1",
+    "parentTitle": "学校组织管理，需要先想清楚哪几件事？"
+  },
+  {
+    "id": "g1v2",
+    "type": "简答",
+    "title": "扁平化管理是否意味着取消所有层级？",
+    "prompt": "结合学校管理实际，论述扁平化组织的适用条件与可能面临的问题。",
+    "points": [
+      "扁平化是减少不必要层级，不等于取消所有层级。",
+      "分析信息传递与响应效率的变化。",
+      "说明管理幅度、职责边界与协调负担。",
+      "结合学校规模和任务说明适用条件。"
+    ],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "max": 5,
+    "topic": "organization",
+    "priority": "A",
+    "referenceAnswer": "扁平化是减少不必要层级，不等于取消所有层级。\n分析信息传递与响应效率的变化。\n说明管理幅度、职责边界与协调负担。\n结合学校规模和任务说明适用条件。",
+    "explanation": "",
+    "parentId": "g1",
+    "parentTitle": "学校组织管理，需要先想清楚哪几件事？"
+  },
+  {
+    "id": "g2",
+    "topic": "organization",
+    "type": "简答",
+    "title": "怎样避免学校部门之间出现责任空白？",
+    "prompt": "请提出避免责任空白和重复指挥的具体做法。",
+    "points": [
+      "明确决策者和执行责任人。",
+      "使用职责清单界定边界与交接事项。",
+      "遇到跨部门事项确定牵头主体。",
+      "建立检查反馈和责任调整机制。"
+    ],
+    "variants": [],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "S",
+    "max": 5,
+    "referenceAnswer": "明确决策者和执行责任人。\n使用职责清单界定边界与交接事项。\n遇到跨部门事项确定牵头主体。\n建立检查反馈和责任调整机制。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "id": "g3",
+    "topic": "evaluation",
+    "type": "简答",
+    "title": "形成性评价怎样帮助改进教学？",
+    "prompt": "说明形成性评价的主要作用，并给出一个教学应用例子。",
+    "variants": [],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "A",
+    "max": 5,
+    "points": [
+      "目：明确评价目的和标准。",
+      "过：关注学习过程。",
+      "证：收集多方面证据。",
+      "馈：提供具体反馈。",
+      "改：依据结果调整教学。"
+    ],
+    "referenceAnswer": "目：明确评价目的和标准。\n过：关注学习过程。\n证：收集多方面证据。\n馈：提供具体反馈。\n改：依据结果调整教学。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "id": "g4",
+    "topic": "evaluation",
+    "type": "简答",
+    "title": "只看期末成绩，会遗漏哪些信息？",
+    "prompt": "某校主要依据期末考试成绩评价教学。请说明局限及改进思路。",
+    "points": [
+      "单次结果难以完整反映学习过程。",
+      "增加过程观察、作品和阶段反馈等证据。",
+      "关注学生起点差异与发展变化。",
+      "将评价结果用于教学调整。"
+    ],
+    "variants": [],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "A",
+    "max": 5,
+    "referenceAnswer": "单次结果难以完整反映学习过程。\n增加过程观察、作品和阶段反馈等证据。\n关注学生起点差异与发展变化。\n将评价结果用于教学调整。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "id": "g5",
+    "topic": "collaboration",
+    "type": "简答",
+    "title": "家校社协同中，各方怎样分工？",
+    "prompt": "请说明学校、家庭和社区如何围绕学生发展合理分工与协作。",
+    "variants": [],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "A",
+    "max": 5,
+    "points": [
+      "责：明确各方职责和边界。",
+      "通：建立稳定沟通渠道。",
+      "联：整合学校、家庭与社区资源。",
+      "共：围绕学生发展落实共同行动并反馈。"
+    ],
+    "referenceAnswer": "责：明确各方职责和边界。\n通：建立稳定沟通渠道。\n联：整合学校、家庭与社区资源。\n共：围绕学生发展落实共同行动并反馈。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "id": "g6",
+    "topic": "collaboration",
+    "type": "简答",
+    "title": "如何组织一次家校社共同参与的实践活动？",
+    "prompt": "围绕明确的学生发展目标，设计一项学校、家庭和社区共同参与的实践活动。",
+    "points": [
+      "依据学生需求设定活动目标。",
+      "明确学校、家庭、社区职责。",
+      "确定行动安排、资源和沟通方式。",
+      "建立安全保障和过程反馈。"
+    ],
+    "variants": [],
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "kind": "short",
+    "priority": "A",
+    "max": 5,
+    "referenceAnswer": "依据学生需求设定活动目标。\n明确学校、家庭、社区职责。\n确定行动安排、资源和沟通方式。\n建立安全保障和过程反馈。",
+    "explanation": "",
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "id": "g7",
+    "kind": "choice",
+    "type": "选择",
+    "topic": "organization",
+    "priority": "S",
+    "max": 2,
+    "title": "部门重复布置任务时，首先应采取哪项措施？",
+    "prompt": "学校跨部门合作中出现重复任务与标准不一，首先应采取哪项措施？",
+    "multiple": false,
+    "choices": [
+      {
+        "id": "A",
+        "text": "增加汇报层级"
+      },
+      {
+        "id": "B",
+        "text": "明确牵头主体并统一任务要求"
+      },
+      {
+        "id": "C",
+        "text": "取消所有评价标准"
+      },
+      {
+        "id": "D",
+        "text": "让各部门继续独立安排"
+      }
+    ],
+    "correctIds": [
+      "B"
+    ],
+    "explanation": "先回应权责边界和协调口径的问题，再安排具体协作。",
+    "variants": [],
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "id": "g8",
+    "kind": "judgment",
+    "type": "判断",
+    "topic": "organization",
+    "priority": "A",
+    "max": 2,
+    "title": "扁平化管理意味着取消所有组织层级。",
+    "prompt": "扁平化管理意味着学校应取消所有组织层级。",
+    "correct": "错误",
+    "explanation": "减少不必要层级不等于取消所有层级，仍需要明确管理幅度和职责边界。",
+    "variants": [],
+    "parentId": "",
+    "parentTitle": ""
+  },
+  {
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "status": "published",
+    "version": 1,
+    "id": "g9",
+    "kind": "fill",
+    "type": "填空",
+    "topic": "evaluation",
+    "priority": "A",
+    "max": 2,
+    "title": "在教学过程中收集信息并改进教学，体现了哪类评价？",
+    "prompt": "在教学过程中持续收集信息并据此调整教学，体现了{{1}}评价的作用。",
+    "blanks": [
+      {
+        "accepted": [
+          "形成性",
+          "形成性评价"
+        ]
+      }
+    ],
+    "explanation": "按维护者列出的可接受答案核对；未列出的同义表述需要人工复核。",
+    "variants": [],
+    "parentId": "",
+    "parentTitle": ""
+  }
+]

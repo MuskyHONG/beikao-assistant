@@ -8,3 +8,5 @@ coverage/
 backups/
 .DS_Store
 *.tsbuildinfo
+playwright-report/
+test-results/

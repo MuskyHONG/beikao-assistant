@@ -5,7 +5,7 @@ import { version } from './version.js';
 
 const config = readConfig(process.env);
 const pool = createDatabase(config.databaseUrl);
-const app = buildApp({ ready: () => checkDatabase(pool), version, logLevel: config.logLevel });
+const app = buildApp({ ready: () => checkDatabase(pool), version, logLevel: config.logLevel, pool, auth: config.auth, trustProxyHops: config.trustProxyHops });
 // Unexpected pool errors must not become unhandled events or expose credentials.
 pool.on('error', () => app.log.error('Idle database connection failed'));
 app.addHook('onClose', () => pool.end());

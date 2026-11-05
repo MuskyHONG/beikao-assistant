@@ -22,17 +22,18 @@ test('PostgreSQL migrations are repeatable, immutable and transactional', async 
     pool = new pg.Pool({ connectionString, max: 2, options: `-c search_path=${schema}` });
     const sql = await readFile(new URL('../migrations/001_foundation.sql', import.meta.url), 'utf8');
     await writeFile(join(directory, '001_foundation.sql'), sql);
+    await writeFile(join(directory, '002_accounts_and_questions.sql'), await readFile(new URL('../migrations/002_accounts_and_questions.sql', import.meta.url), 'utf8'));
     const url = pathToFileURL(directory + '/');
-    assert.deepEqual(await migrate(pool, url), ['001_foundation.sql']);
+    assert.deepEqual(await migrate(pool, url), ['001_foundation.sql','002_accounts_and_questions.sql']);
     assert.deepEqual(await migrate(pool, url), []);
     await checkDatabase(pool);
     await writeFile(join(directory, '001_foundation.sql'), sql + '\n-- changed');
     await assert.rejects(migrate(pool, url), /modified/);
     await writeFile(join(directory, '001_foundation.sql'), sql);
-    await writeFile(join(directory, '002_broken.sql'), 'CREATE TABLE should_rollback (id int); SELECT * FROM nonexistent_table;');
+    await writeFile(join(directory, '003_broken.sql'), 'CREATE TABLE should_rollback (id int); SELECT * FROM nonexistent_table;');
     await assert.rejects(migrate(pool, url));
     assert.equal((await pool.query("SELECT to_regclass('should_rollback') AS value")).rows[0].value, null);
-    assert.equal((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count, 1);
+    assert.equal((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count, 2);
   } finally {
     await pool?.end();
     await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);

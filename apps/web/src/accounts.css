@@ -1,0 +1,6 @@
+.login-page{display:grid;place-items:center;min-height:85vh;padding:32px 20px;background:var(--bg,#f6f7f2)}
+.login-card{max-width:480px;width:100%;display:grid;gap:20px}.login-card h1{font-size:26px}.login-card .brand{margin-bottom:8px}.login-card input{width:100%}
+.account-row{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--line)}.account-row p{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.connection-error{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:14px 20px;background:#fff0df;color:#7c4d22;font-size:14px}
+.session-controls{display:flex;align-items:center;gap:12px}.history-list{margin-top:20px}.history-list summary{cursor:pointer;padding:10px 0}
+@media(max-width:800px){.session-controls{font-size:12px;gap:8px}.session-controls .account-name{display:none}.login-page{padding:20px}}

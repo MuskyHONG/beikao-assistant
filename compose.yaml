@@ -25,6 +25,10 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:8080}
+      ALLOW_INSECURE_HTTP: ${ALLOW_INSECURE_HTTP:-true}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      SESSION_HOURS: ${SESSION_HOURS:-168}
     command: [node, apps/api/dist/migrate.js]
     depends_on:
       db:

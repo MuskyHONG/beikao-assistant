@@ -47,6 +47,12 @@ jobs:
       HTTP_PORT: '8080'
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: docker compose -p beikao-ci up -d --build
       - name: Verify proxied API and frontend
         shell: bash
@@ -60,6 +66,16 @@ jobs:
             sleep 2
           done
           exit 1
+      - run: node scripts/e2e-bootstrap.mjs
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
       - if: failure()
         run: docker compose -p beikao-ci logs --tail 100
       - if: always()
