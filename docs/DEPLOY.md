@@ -1,6 +1,6 @@
 # 在自己的服务器部署
 
-适用于 Linux + Docker Engine + Compose v2、Python3（仅交互式账号初始化工具）。v0.2.0-alpha.2 已实现服务器账号和共享题库；个人练习、目标、模拟答卷及未核验时政草稿仍在访问者浏览器。建议起步使用2核/4GB内存的单机环境，再依据真实负载调整；这不是压力测试结果。
+适用于 Linux + Docker Engine + Compose v2、Python3（仅交互式账号初始化工具）。v0.2.0-alpha.3 已实现服务器账号和共享题库；个人练习、目标、模拟答卷及未核验时政草稿仍在访问者浏览器。建议起步使用2核/4GB内存的单机环境，再依据真实负载调整；这不是压力测试结果。
 
 ## 首次拉取与启动
 
@@ -18,7 +18,7 @@ python3 --version
 默认端口：本机开发网页43126，API43127；Docker部署仅将网页入口43128映射到宿主127.0.0.1。API和PostgreSQL不映射宿主端口。开发端口被占用会报错，不自动寻找其他端口。
 
 ```sh
-git clone --branch v0.2.0-alpha.2 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch v0.2.0-alpha.3 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 cd beikao-assistant
 python3 - <<'PY'
 from pathlib import Path
@@ -51,7 +51,7 @@ curl --fail http://127.0.0.1:43128/api/v1/version
 
 首次构建和数据库初始化需要等待。`migrate` 容器正常状态是 Exited(0)，其余 db、api、web 应运行且健康。ready 返回 200 后访问 `http://127.0.0.1:43128`；web 仅绑定服务器本地，数据库和 API 没有宿主机端口。
 
-成功时ready返回`{"status":"ready","version":"0.2.0-alpha.2"}`。若未就绪，先查看下列日志定位镜像下载、数据库启动或迁移失败：
+成功时ready返回`{"status":"ready","version":"0.2.0-alpha.3"}`。若未就绪，先查看下列日志定位镜像下载、数据库启动或迁移失败：
 
 ```sh
 docker compose logs --tail=100 migrate api web
@@ -135,7 +135,7 @@ docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -
 
 ```sh
 git fetch origin --tags
-git checkout v0.2.0-alpha.2
+git checkout v0.2.0-alpha.3
 docker compose build
 docker compose up -d --force-recreate migrate api web
 docker compose ps -a
@@ -144,6 +144,8 @@ curl --fail http://127.0.0.1:43128/api/v1/version
 ```
 
 按镜像构建、数据库健康、一次性迁移、API 健康、web 启动的顺序进行。迁移失败时不会启动依赖它的新 API；检查 `docker compose logs migrate`。对已有迁移不允许改文件，校验不一致会拒绝继续。
+
+Windows Docker Desktop 可直接在 PowerShell 中运行以上 Git 和 Compose 命令，将 `curl` 换成 `curl.exe`。如果旧版构建在 `npm ci` 阶段报 `esbuild ETXTBSY`，升级到 `v0.2.0-alpha.3` 后重新构建。此修复沿用现有 `.env` 和 PostgreSQL 数据卷。
 
 当前为单机部署，不承诺零停机。后续数据库迁移应采用兼容旧 API 的扩展/收缩步骤。不能只 checkout 旧代码就认为数据库也回退；先根据发布说明确认兼容性，不自动执行破坏性 down migration。
 

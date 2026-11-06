@@ -5,7 +5,7 @@
 ## 分支与标识
 
 - main：通过检查的当前主线；开发分支使用 codex/功能名 或 feature/功能名。
-- 发布标签：vMAJOR.MINOR.PATCH，未稳定阶段加 -alpha.N。当前版本为 v0.2.0-alpha.2。
+- 发布标签：vMAJOR.MINOR.PATCH，未稳定阶段加 -alpha.N。当前版本为 v0.2.0-alpha.3。
 - VERSION、根 package.json、web/api package.json 版本一致；锁文件同次更新，CI 校验标签一致。
 - 前端显示版本；`GET /api/v1/version` 返回同一版本和能力范围。数据库版本用单独的 schema_migrations 账本，不拿应用版本替代迁移编号。
 - 已发布标签不移动；修复产生新版本。服务器按 tag 拉取，便于核对实际部署内容。
@@ -18,9 +18,9 @@
 4. 创建有说明的标签并推送：
 
 ```sh
-git tag -a v0.2.0-alpha.2 -m "v0.2.0-alpha.2: accounts and shared question bank"
+git tag -a v0.2.0-alpha.3 -m "v0.2.0-alpha.3: fix Docker dependency installation"
 git push origin main
-git push origin v0.2.0-alpha.2
+git push origin v0.2.0-alpha.3
 ```
 
 5. 标签触发的 CI 再次通过后，release job 用该标签生成源码 tar.gz、SHA256 校验文件与 GitHub Release；alpha/beta/rc 标签标记为 prerelease。归档不包含 node_modules、.env 或数据库数据。
@@ -31,7 +31,7 @@ git push origin v0.2.0-alpha.2
 ## 获取源码
 
 ```sh
-git clone --branch v0.2.0-alpha.2 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch v0.2.0-alpha.3 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 ```
 
 也可从 GitHub Releases 下载 tar.gz 并校验 SHA256。以后仓库改为私有时，服务器使用自己的只读 deploy key 或个人授权，不把电脑上的 GitHub token 复制进项目。

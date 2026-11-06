@@ -2,7 +2,7 @@
 
 面向备考用户的学习与题目练习工具，另设维护工作台。根据已确认的网页原型逐步建设可独立部署的服务。
 
-**当前版本：v0.2.0-alpha.2（身份权限与共享题库）。** 登录、账号管理、题目版本与发布、客观答案核对已连接 PostgreSQL。备考目标、个人练习、模拟答卷仍保存在当前浏览器，尚未云同步；时政融合仍是未核验草稿预览。
+**当前版本：v0.2.0-alpha.3（身份权限与共享题库）。** 登录、账号管理、题目版本与发布、客观答案核对已连接 PostgreSQL。备考目标、个人练习、模拟答卷仍保存在当前浏览器，尚未云同步；时政融合仍是未核验草稿预览。
 
 ## 技术栈
 
@@ -26,7 +26,7 @@
 ## 服务器启动
 
 ```sh
-git clone --branch v0.2.0-alpha.2 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch v0.2.0-alpha.3 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 cd beikao-assistant
 cp .env.example .env
 ```

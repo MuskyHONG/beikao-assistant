@@ -3,7 +3,8 @@ WORKDIR /app
 COPY package.json package-lock.json VERSION ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm ci
+# Use esbuild's platform package and skip its install-time binary check.
+RUN npm ci --workspace @beikao/web --ignore-scripts --include=optional
 COPY apps/web apps/web
 RUN npm run build -w @beikao/web
 

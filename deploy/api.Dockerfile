@@ -3,10 +3,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm ci
+# The API compiles with tsc. It does not need dependency install hooks.
+RUN npm ci --workspace @beikao/api --ignore-scripts
 COPY apps/api apps/api
 RUN npm run build -w @beikao/api
-RUN npm prune --omit=dev
+RUN npm prune --workspace @beikao/api --omit=dev --ignore-scripts
 
 FROM node:24-bookworm-slim
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=43127
