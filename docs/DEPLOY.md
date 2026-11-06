@@ -147,6 +147,13 @@ curl --fail http://127.0.0.1:43128/api/v1/version
 
 Windows Docker Desktop 可直接在 PowerShell 中运行以上 Git 和 Compose 命令，将 `curl` 换成 `curl.exe`。如果旧版构建在 `npm ci` 阶段报 `esbuild ETXTBSY`，升级到 `v0.2.0-alpha.3` 后重新构建。此修复沿用现有 `.env` 和 PostgreSQL 数据卷。
 
+若 `npm ci` 在下载依赖时报告 `ECONNRESET` 或 `ETIMEDOUT`，可以为当次构建指定可访问的 npm 镜像源。以下以 npmmirror 为例，构建成功后再启动服务。
+
+```sh
+docker compose build --build-arg NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+docker compose up -d --no-build --force-recreate migrate api web
+```
+
 当前为单机部署，不承诺零停机。后续数据库迁移应采用兼容旧 API 的扩展/收缩步骤。不能只 checkout 旧代码就认为数据库也回退；先根据发布说明确认兼容性，不自动执行破坏性 down migration。
 
 从0.1升级到0.2时，先备份，补充APP_ORIGIN、ALLOW_INSECURE_HTTP、TRUST_PROXY_HOPS，新增002迁移由migrate容器执行。首次建立管理员，选择是否导入样例。匿名原型localStorage记录不自动归入任何账号；新版本个人记录按账号隔离，不覆盖旧版本浏览器键。

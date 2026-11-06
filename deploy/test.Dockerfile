@@ -1,4 +1,5 @@
 FROM node:24-bookworm-slim
+ARG NPM_CONFIG_REGISTRY
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
