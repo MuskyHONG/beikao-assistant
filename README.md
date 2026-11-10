@@ -71,6 +71,6 @@ npm run test:e2e
 
 apps/web为前端；apps/api为后端、迁移、样例与初始化工具；deploy为容器配置；e2e为真实浏览器跨账号测试。
 
-文档：[技术方案](docs/ARCHITECTURE.md) · [接口](docs/API_PLAN.md) · [数据模型](docs/DATA_MODEL.md) · [部署/恢复](docs/DEPLOY.md) · [版本管理](docs/RELEASING.md) · [实施顺序](docs/ROADMAP.md) · [变更记录](CHANGELOG.md) · [验证](docs/VALIDATION.md)。
+文档：[产品需求](docs/PRD.md) · [技术方案](docs/ARCHITECTURE.md) · [接口](docs/API_PLAN.md) · [数据模型](docs/DATA_MODEL.md) · [部署/恢复](docs/DEPLOY.md) · [版本管理](docs/RELEASING.md) · [实施顺序](docs/ROADMAP.md) · [变更记录](CHANGELOG.md) · [验证](docs/VALIDATION.md)。
 
 原型参考源码：4e438bc96dad595767312576361f59f8c406e89c。原有Sites原型保持原样，此工程不依赖Sites，不包含其凭据或身份配置。
