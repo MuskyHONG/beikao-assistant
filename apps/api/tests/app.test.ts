@@ -16,11 +16,12 @@ test('liveness does not depend on a healthy database; readiness does', async () 
 });
 
 test('readiness and explicit capability/version metadata describe this milestone', async () => {
-  const app = buildApp({ version: '0.2.0-alpha.1', ready: async () => {} });
+  const app = buildApp({ version: '0.4.0-alpha.1', ready: async () => {} });
   try {
     assert.equal((await app.inject('/api/v1/health/ready')).statusCode, 200);
     const body = (await app.inject('/api/v1/version')).json();
-    assert.equal(body.version, '0.2.0-alpha.1');
+    assert.equal(body.version, '0.4.0-alpha.1');
+    assert.equal(body.stage, 'server-trial');
     assert.equal(body.capabilities.sharedQuestionBank, false);
     assert.equal((await app.inject('/api/v1/questions')).statusCode, 404);
     assert.equal((await app.inject({ method: 'POST', url: '/api/v1/questions', payload: {} })).statusCode, 404);

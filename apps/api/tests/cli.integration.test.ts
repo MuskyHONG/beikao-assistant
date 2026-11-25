@@ -26,6 +26,11 @@ test('server CLI bootstraps once, imports teaching samples atomically and revoke
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM questions')).rows[0].n,11);
     assert.equal(run('seed-demo').status,1);
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM question_revisions')).rows[0].n,11);
+    result=run('seed-trial');assert.equal(result.status,0,result.stderr);
+    assert.match(result.stdout,/10 imported/);
+    result=run('seed-trial');assert.equal(result.status,0,result.stderr);
+    assert.match(result.stdout,/0 imported, 10 already imported/);
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM question_revisions')).rows[0].n,21);
     const id=(await pool.query('SELECT id FROM users')).rows[0].id;
     await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES('test-token-digest',$1,now()+interval '1 day')",[id]);
     result=run('reset-password',{email:account.email,password:'New.CLI.Password.456'});assert.equal(result.status,0,result.stderr);

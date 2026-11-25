@@ -47,6 +47,8 @@ jobs:
           exit 1
       - run: node scripts/e2e-bootstrap.mjs
       - run: npm run test:e2e
+      - name: Restore the browser test database in a separate Compose project
+        run: bash scripts/test-ci-restore.sh
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

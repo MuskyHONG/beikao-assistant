@@ -9,18 +9,18 @@ export const defaultBank = [
 ];
 export function flattenBank(bank) { return bank.flatMap(g => [{ ...g, parentId: '', parentTitle: '' }, ...(g.variants || []).map(v => ({ ...v, parentId: g.id, parentTitle: g.title, topic: v.topic || g.topic }))]); }
 export function publishedBank(bank) { return bank.filter(q => q.status === 'published').map(g => ({ ...g, variants: (g.variants || []).filter(v => v.status === 'published') })); }
-export function resolveQuestion(bank, id) {
+export function resolveQuestion(bank, id, registeredTopics = topics) {
   for (const group of bank) {
     const q = group.id === id ? group : (group.variants || []).find(v => v.id === id);
-    if (q) return { ...q, group, topic: topics.find(t => t.id === (q.topic || group.topic)), points: q.points || [], isVariant: q.id !== group.id };
+    if (q) return { ...q, group, topic: registeredTopics.find(t => t.id === (q.topic || group.topic)), points: q.points || [], isVariant: q.id !== group.id };
   }
   return null;
 }
-export function validateQuestion(q, bank = []) {
+export function validateQuestion(q, bank = [], registeredTopics = topics) {
   const errors = [];
   if (!kinds[q.kind]) errors.push('请选择题型。');
   if (!q.prompt?.trim()) errors.push('请填写题干。');
-  if (!topics.some(t => t.id === q.topic)) errors.push('请选择知识主题。');
+  if (!registeredTopics.some(t => t.id === q.topic)) errors.push('请选择知识主题。');
   if (!Number.isFinite(Number(q.max)) || Number(q.max) <= 0 || Number(q.max) > 100) errors.push('分值应大于 0 且不超过 100。');
   if (!q.sourceType) errors.push('请选择资料性质。');
   if (['官方材料', '考生回忆'].includes(q.sourceType) && !q.sourceUrl?.trim()) errors.push('官方材料或考生回忆题需填写可追溯的来源链接。');

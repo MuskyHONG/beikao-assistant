@@ -10,6 +10,16 @@ const params = { type: 'object', required: ['id'], properties: { id } };
 const pagination = { type: 'object', additionalProperties: false, properties: { cursor: { type: 'string', maxLength: 80 }, limit: { type: 'integer', minimum: 1, maximum: 200, default: 100 } } };
 
 export function installQuestionRoutes(app: FastifyInstance, pool: pg.Pool, guard: Guard) {
+  app.get('/api/v1/topics', async request => {
+    await guard(request);
+    const result = await pool.query(`SELECT t.id, t.title, t.category, t.priority,
+      CASE WHEN r.card_id IS NULL THEN NULL ELSE jsonb_build_object('id',r.card_id,'version',r.version,
+        'overview',r.content->'overview','points',r.content->'points','source',r.content->'source') END AS card
+      FROM knowledge_topics t LEFT JOIN knowledge_card_revisions r
+      ON (t.id,t.published_card_id,t.published_card_version)=(r.topic_id,r.card_id,r.version)
+      WHERE r.card_id IS NOT NULL OR t.priority IS NULL ORDER BY t.position,t.id`);
+    return { items: result.rows };
+  });
   app.get<{ Querystring: { cursor?: string; limit?: number } }>('/api/v1/questions', { schema: { querystring: pagination } }, async request => {
     await guard(request);
     const page = await listQuestions(pool, false, request.query.cursor, request.query.limit);

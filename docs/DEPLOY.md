@@ -1,6 +1,6 @@
 # 在自己的服务器部署
 
-适用于 Linux + Docker Engine + Compose v2、Python3（仅交互式账号初始化工具）。v0.2.0-alpha.3 已实现服务器账号和共享题库；个人练习、目标、模拟答卷及未核验时政草稿仍在访问者浏览器。建议起步使用2核/4GB内存的单机环境，再依据真实负载调整；这不是压力测试结果。
+适用于 Linux + Docker Engine + Compose v2 或 Windows Docker Desktop 的 Linux 容器模式。账号初始化工具需要 Python 3。以下拉取示例适用于 `v0.4.0-alpha.1` 试用标签发布后，实际可用标签以 GitHub Releases 为准。
 
 ## 首次拉取与启动
 
@@ -18,7 +18,7 @@ python3 --version
 默认端口：本机开发网页43126，API43127；Docker部署仅将网页入口43128映射到宿主127.0.0.1。API和PostgreSQL不映射宿主端口。开发端口被占用会报错，不自动寻找其他端口。
 
 ```sh
-git clone --branch v0.2.0-alpha.3 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch v0.4.0-alpha.1 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 cd beikao-assistant
 python3 - <<'PY'
 from pathlib import Path
@@ -87,6 +87,14 @@ docker compose exec -T api node apps/api/dist/seed-demo.js
 
 该导入在事务内一次完成，非空题库拒绝执行，不覆盖任何现有内容。日常内容维护使用网页，不反复执行导入。
 
+包含首批试用代码的构建另有 10 道可选模拟题。先完成 `004_exam_drafts.sql` 和 `005_initial_knowledge.sql` 迁移，再在隔离试用库执行以下命令。样题来自已确认的教学内容，足以完整体验 20 分钟目标配比。重复导入会跳过已存在的样题，遇到同题号的不同内容会报告冲突。
+
+```bash
+docker compose exec -T api node apps/api/dist/seed-trial.js
+```
+
+部署自当前工作区时，迁移追加到 `006_exam_results.sql`。`/api/v1/version` 中的 `publishedKnowledge`、`cloudExamDrafts` 和 `cloudExamAttempts` 表示知识卡、续答及交卷复盘接口可用。导入样题后，学员可从「模拟考试」直接开卷、作答、复盘并打印。
+
 忘记密码时，由有服务器权限的管理员执行：
 
 ```sh
@@ -103,7 +111,9 @@ python3 scripts/account-input.py reset | docker compose exec -T api node apps/ap
 2. 新建选择、判断、填空、简答，补齐相应答案与解析并发布；另一账号刷新题库后能看到并练习。
 3. 保存一份未发布修改，学员仍看到旧版本；点击“发布修改”后才看到新版本。
 4. 学员不能进入维护功能；客观题可以核对，简答显示参考供自评。退出和重新登录正常。
-5. `docker compose restart api web`后账号及题库仍存在。个人目标、练习、模拟答卷本期仍在访问者浏览器，不属于云同步验收。
+5. 使用 `v0.3.0-alpha.1` 时，在学员窗口设置备考目标，保存一道题的草稿，选择「想不起来」或「有点模糊」。用第二个无痕窗口登录同一账号，检查目标、草稿、历史和下一次复练日期。再登录另一个账号，确认记录隔离。
+6. 打开模拟试卷库，检查推荐档、实际题量及缺额。开卷后答一题，在第二个无痕窗口用同账号继续。交卷后检查记录和复盘，另外开一套选择纸笔自核，保存手填成绩并打印答案。
+7. 分别预览 A4 空白卷、答案、复盘和知识提纲，确认题号和分值一致。重启 API 和网页后检查账号、题库、单题历史及服务器答卷。旧演示卷与未核验时政草稿保留在原浏览器。
 
 完整自动测试只需Docker，在项目根目录执行：
 
@@ -111,13 +121,13 @@ python3 scripts/account-input.py reset | docker compose exec -T api node apps/ap
 bash scripts/test-server.sh
 ```
 
-它会独立构建测试镜像并启动临时PostgreSQL，运行依赖公告检查、类型检查、20项单元/原型规则测试、前后端构建、真实数据库权限/版本/CLI测试；全部通过退出码为0。每次使用独立Compose项目名，不读取.env、不映射任何宿主端口、不挂载业务卷，完成后自动清理自身测试容器与网络。第一次需要下载镜像和依赖。
+它会独立构建测试镜像并启动临时 PostgreSQL，运行依赖公告、类型、单元、构建、迁移、权限与账号学习记录测试。每次使用独立 Compose 项目名，不读取 `.env`、不映射宿主端口、不挂载业务卷，结束后清理测试容器与网络。
 
 跨账号的真实浏览器测试另外在[GitHub Actions](https://github.com/MuskyHONG/beikao-assistant/actions)自动执行，覆盖四题型、发布/草稿、历史、自评、改密与退出。`npm run test:e2e`使用合成账号，不应直接对真实业务站点执行；日常服务器验收按上面的人工步骤即可。
 
 ## 持久化与备份
 
-数据库保存在 Compose 的 postgres-data 命名卷中。普通 `docker compose down` 不删卷；不要使用 `down -v` 清理有业务数据的服务器。前端目前的 localStorage 位于访问者浏览器，不在数据库备份里。
+数据库保存在 Compose 的 postgres-data 命名卷中。普通 `docker compose down` 保留该卷。含试用版迁移的备份会保存单题记录、服务器模拟卷的题目快照、原答、计分历史和复练安排。浏览器中的演示卷、旧版个人记录和未核验时政草稿仍由原设备保存。
 
 以下备份命令在服务器 Linux shell 运行：
 
@@ -131,11 +141,18 @@ docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -
 
 ## 更新到新版本
 
+从 `v0.2.0-alpha.3` 或个人学习开发版升级时，先备份原 PostgreSQL 数据库，保留原 `.env` 和 Compose 项目名。迁移服务会补齐未应用的迁移直至 `006_exam_results.sql`，账号、题库和已有学习记录随原数据库卷保留。`/api/v1/version` 应返回 `0.4.0-alpha.1`、阶段 `server-trial` 和 `cloudExamAttempts: true`。
+
 先备份数据库，阅读目标版本CHANGELOG并记录旧tag。保留已有.env，不再执行首次初始化命令。若升级自alpha.1，更新HTTP_PORT=43128，PORT=43127、WEB_DEV_PORT=43126；APP_ORIGIN仅在原本为本机旧地址时改为http://127.0.0.1:43128，已有HTTPS域名保持原域名。同步外层反向代理的上游端口，数据库密码不变。
 
 ```sh
 git fetch origin --tags
-git checkout v0.2.0-alpha.3
+git checkout v0.4.0-alpha.1
+```
+
+切换到已发布的试用标签后执行下列命令。
+
+```sh
 docker compose build
 docker compose up -d --force-recreate migrate api web
 docker compose ps -a
@@ -163,14 +180,26 @@ docker compose up -d --no-build --force-recreate migrate api web
 使用独立新目录、独立 Compose 项目名和新端口，不能覆盖正在使用的生产数据库。以下示例的 `.env` 先按首次启动配置好，`backups/checked.dump` 是待验证备份：
 
 ```sh
-HTTP_PORT=43129 docker compose -p beikao-restore up -d db
-# 等待新 db 健康后：
+export HTTP_PORT=43129 APP_ORIGIN=http://127.0.0.1:43129
+docker compose -p beikao-restore up -d --wait db
 docker compose -p beikao-restore exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --exit-on-error --no-owner' < backups/checked.dump
-HTTP_PORT=43129 docker compose -p beikao-restore up -d --build
+docker compose -p beikao-restore up -d --build
 curl --fail http://127.0.0.1:43129/api/v1/health/ready
 ```
 
-恢复目标应为空数据库。验证迁移账本、users、questions、question_revisions和question_publications数量，使用恢复的账号检查权限及版本历史后再计划切换。备份含账号哈希与会话，按敏感数据管理；切换前可撤销全部旧sessions，强制重新登录。当前个人答卷在浏览器，不在pg_dump中。
+恢复目标应为空数据库。用隔离账号检查目标、单题历史、模拟原答、题目快照、评分和复练。备份含账号和个人作答，保留在受限存储中。GitHub 容器检查使用合成账号执行相同的恢复，再比较恢复前后的接口结果。
+
+在 PowerShell 中备份自定义格式时，可让 `pg_dump` 先在容器中写文件，再用 `docker compose cp` 复制，避免一些 PowerShell 版本的文本重定向改写二进制。以下命令使用默认数据库账号和库名，有修改时替换为 `.env` 中的实际值。
+
+```powershell
+New-Item -ItemType Directory -Force backups | Out-Null
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+docker compose exec -T db pg_dump -U beikao -d beikao -Fc -f "/tmp/beikao-$stamp.dump"
+if ($LASTEXITCODE -ne 0) { throw '备份失败' }
+docker compose cp "db:/tmp/beikao-$stamp.dump" "backups/beikao-$stamp.dump"
+```
+
+PowerShell 恢复时，先给独立项目设置 `$env:HTTP_PORT = '43129'` 和 `$env:APP_ORIGIN = 'http://127.0.0.1:43129'`，再启动其空数据库。用 `docker compose -p beikao-restore cp backups/checked.dump db:/tmp/checked.dump` 复制进去，再用 `docker compose -p beikao-restore exec -T db pg_restore -U beikao -d beikao --exit-on-error --no-owner /tmp/checked.dump` 恢复。启动完整试用栈后访问新端口验收。
 
 ## 开发时启动 API
 

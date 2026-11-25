@@ -7,6 +7,10 @@ export interface QuestionContent {
   sourceType: string; sourceUrl: string; explanation: string;
   multiple: boolean; choices: { id: string; text: string }[]; correctIds: string[];
   correct: string; blanks: { accepted: string[] }[]; referenceAnswer: string; points: string[];
+  simulation?: boolean;
+  difficulty?: 'basic' | 'challenging' | null;
+  rubricMaxes?: number[] | null;
+  knowledgeEvidence?: { knowledgeId: string; version: number; pointIds: string[] } | null;
 }
 export interface QuestionRow extends QuestionContent {
   id: string; version: number; etag: number; publishedVersion: number | null;
@@ -18,7 +22,7 @@ export const contentSchema = {
   type: 'object', required: ['kind', 'topic', 'prompt', 'max'], additionalProperties: false,
   properties: {
     parentId: string(80), kind: { type: 'string', enum: ['choice','judgment','fill','short'] },
-    topic: { type: 'string', enum: ['organization','collaboration','evaluation'] },
+    topic: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$' },
     priority: { type: 'string', enum: ['S','A','B'] }, title: string(200), prompt: string(10000),
     max: { type: 'number', exclusiveMinimum: 0, maximum: 100 },
     sourceType: { type: 'string', enum: ['教学编题','考生回忆','官方材料','AI 新编'] }, sourceUrl: string(2000), explanation: string(10000),
@@ -26,6 +30,15 @@ export const contentSchema = {
     correctIds: strings(8, 8), correct: { type: 'string', enum: ['正确','错误'] },
     blanks: { type: 'array', maxItems: 5, items: { type: 'object', additionalProperties: false, required: ['accepted'], properties: { accepted: strings(30, 300) } } },
     referenceAnswer: string(20000), points: strings(50, 2000),
+    simulation: { type: 'boolean' },
+    difficulty: { enum: ['basic', 'challenging', null] },
+    rubricMaxes: { anyOf: [{ type: 'null' }, { type: 'array', minItems: 1, maxItems: 50,
+      items: { type: 'number', exclusiveMinimum: 0, maximum: 100 } }] },
+    knowledgeEvidence: { anyOf: [{ type: 'null' }, { type: 'object', additionalProperties: false,
+      required: ['knowledgeId', 'version', 'pointIds'], properties: {
+        knowledgeId: string(80), version: { type: 'integer', minimum: 1, maximum: 2147483647 },
+        pointIds: { type: 'array', uniqueItems: true, minItems: 1, maxItems: 50, items: string(80) },
+      } }] },
   },
 };
 export function normalizeContent(value: Partial<QuestionContent>): QuestionContent {
@@ -36,12 +49,13 @@ export function normalizeContent(value: Partial<QuestionContent>): QuestionConte
     explanation: value.explanation?.trim() || '', multiple: value.multiple ?? false, choices: value.choices || [],
     correctIds: value.correctIds || [], correct: value.correct || '错误', blanks: value.blanks || [],
     referenceAnswer: value.referenceAnswer?.trim() || '', points: value.points || [],
+    simulation: value.simulation, difficulty: value.difficulty, rubricMaxes: value.rubricMaxes, knowledgeEvidence: value.knowledgeEvidence,
   };
 }
 export function publishingIssues(q: QuestionContent) {
   const issues: string[] = [];
   if (!q.prompt) issues.push('请填写题干。');
-  if (!['organization','collaboration','evaluation'].includes(q.topic)) issues.push('请选择有效知识主题。');
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(q.topic)) issues.push('请选择有效知识主题。');
   if (!(q.max > 0 && q.max <= 100)) issues.push('请设置有效分值。');
   if (['官方材料','考生回忆'].includes(q.sourceType) && !q.sourceUrl) issues.push('请填写可追溯来源。');
   if (q.sourceUrl) { try { if (!['http:','https:'].includes(new URL(q.sourceUrl).protocol)) throw new Error(); } catch { issues.push('来源链接应为完整 HTTP/HTTPS 地址。'); } }
@@ -56,7 +70,22 @@ export function publishingIssues(q: QuestionContent) {
     if (!q.blanks.length || q.blanks.length > 5 || q.blanks.some(b => !b.accepted.length || b.accepted.some(a => !a.trim())) || tokens.length !== q.blanks.length || q.blanks.some((_, i) => tokens.filter(t => t === i + 1).length !== 1)) issues.push('填空标记与逐空答案应一一对应。');
   }
   if (q.kind === 'short' && (!q.referenceAnswer || !q.points.length || q.points.some(p => !p.trim()))) issues.push('请填写简答参考答案和评分要点。');
+  if (q.simulation && !hasExamScoreStructure(q)) issues.push('请校验模拟题的难度、分值精度和评分结构。');
   return issues;
+}
+
+export function hasExamScoreStructure(q: QuestionContent) {
+  const cents = Math.round(q.max * 100);
+  if (cents < 1 || cents > 10000 || cents / 100 !== q.max) return false;
+  if ((q.kind === 'choice' || q.kind === 'judgment') && !['basic', 'challenging'].includes(q.difficulty ?? '')) return false;
+  if (q.kind === 'choice' && q.choices.some(option => option.id.includes(','))) return false;
+  if (q.kind !== 'short') return true;
+  if (q.rubricMaxes) {
+    const units = q.rubricMaxes.map(value => Math.round(value * 100));
+    return q.rubricMaxes.length === q.points.length && units.every((value, i) => value > 0 && value / 100 === q.rubricMaxes![i]) &&
+      units.reduce((sum, value) => sum + value, 0) === cents;
+  }
+  return q.points.length > 0 && cents >= q.points.length;
 }
 export function learnerQuestion(q: QuestionRow) {
   // Explicit whitelist. Internal keys/reference answers cannot reach pre-answer responses.
@@ -66,13 +95,14 @@ export function learnerQuestion(q: QuestionRow) {
     choices: q.kind === 'choice' ? q.choices : [], blanks: q.kind === 'fill' ? q.blanks.map(() => ({ accepted: [] })) : [], points: [],
   };
 }
-export function assess(q: QuestionContent, answer: string) {
+export function assess(q: Pick<QuestionContent, 'kind' | 'max' | 'blanks' | 'choices' | 'multiple' | 'correct' | 'correctIds'>, answer: string) {
   const normalize = (s: string) => s.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, '');
   if (q.kind === 'fill') {
     let values: string[];
     try { const parsed: unknown = JSON.parse(answer); if (!Array.isArray(parsed) || parsed.some(v => typeof v !== 'string')) throw new Error(); values = parsed; }
     catch { throw new HttpError(400, 'invalid_response'); }
-    if (values.length !== q.blanks.length || values.every(v => !v.trim())) throw new HttpError(400, 'empty_response');
+    if (values.length !== q.blanks.length) throw new HttpError(400, 'invalid_response');
+    if (values.every(v => !v.trim())) throw new HttpError(400, 'empty_response');
     const matches = q.blanks.map((b, i) => b.accepted.some(a => normalize(a) === normalize(values[i]))), hits = matches.filter(Boolean).length;
     return { state: hits === matches.length ? 'correct' : hits ? 'partial' : 'incorrect', matches, hits, total: matches.length, score: Math.round(q.max * hits / matches.length * 100) / 100 };
   }
@@ -99,10 +129,15 @@ export async function listQuestions(pool: pg.Pool, admin: boolean, cursor = '', 
   const result = await pool.query<Raw>(`${admin ? adminSelect + ' WHERE' : publishedSelect + ' AND'} q.id>$1 ORDER BY q.id LIMIT $2`, [cursor, limit + 1]);
   return { items: result.rows.slice(0, limit).map(mapRow), nextCursor: result.rows.length > limit ? result.rows[limit - 1].id : null };
 }
-export async function readPublished(pool: pg.Pool, id: string) {
+export async function readPublished(pool: pg.Pool | pg.PoolClient, id: string) {
   const result = await pool.query<Raw>(publishedSelect + ' AND q.id=$1', [id]);
   if (!result.rows[0]) throw new HttpError(404, 'not_found');
   return mapRow(result.rows[0]);
+}
+
+export async function listSimulationQuestions(db: pg.Pool | pg.PoolClient) {
+  const result = await db.query<Raw>(publishedSelect + ` AND r.content->'simulation'='true'::jsonb ORDER BY q.id`);
+  return result.rows.map(mapRow).filter(hasExamScoreStructure);
 }
 
 export async function changeQuestion(pool: pg.Pool, input: { id: string; expectedRevision: number; actorId: string; content?: QuestionContent; action: 'draft' | 'publish' | 'archive' }) {
@@ -113,7 +148,18 @@ export async function changeQuestion(pool: pg.Pool, input: { id: string; expecte
     const current = (await client.query<Raw>(adminSelect + ' WHERE q.id=$1', [input.id])).rows[0];
     if ((current?.etag ?? 0) !== input.expectedRevision) throw new HttpError(409, 'version_conflict');
     if (!current && !input.content) throw new HttpError(404, 'not_found');
-    const content = input.content ?? current.content;
+    const content = input.content ? {
+      ...input.content,
+      simulation: input.content.simulation ?? current?.content.simulation,
+      difficulty: input.content.difficulty === undefined ? current?.content.difficulty : input.content.difficulty,
+      rubricMaxes: input.content.rubricMaxes === undefined && input.content.max === current?.content.max &&
+        JSON.stringify(input.content.points) === JSON.stringify(current.content.points) ? current.content.rubricMaxes : input.content.rubricMaxes,
+      knowledgeEvidence: input.content.knowledgeEvidence === undefined ? current?.content.knowledgeEvidence : input.content.knowledgeEvidence,
+    } : current.content;
+    if (input.action !== 'archive') {
+      const topic = await client.query('SELECT 1 FROM knowledge_topics WHERE id=$1', [content.topic]);
+      if (!topic.rowCount) throw new HttpError(400, 'invalid_question', ['请选择有效知识主题。']);
+    }
     const all = (await client.query<Raw>(adminSelect)).rows;
     if (content.parentId) {
       const parent = all.find(q => q.id === content.parentId);
@@ -123,6 +169,14 @@ export async function changeQuestion(pool: pg.Pool, input: { id: string; expecte
     if (input.action === 'publish') {
       const issues = publishingIssues(content);
       if (issues.length) throw new HttpError(400, 'invalid_question', issues);
+      if (content.knowledgeEvidence) {
+        const { knowledgeId, version, pointIds } = content.knowledgeEvidence;
+        const card = (await client.query<{ points: { id: string }[] }>(`SELECT content->'points' AS points FROM knowledge_card_revisions
+          WHERE topic_id=$1 AND card_id=$2 AND version=$3`, [content.topic, knowledgeId, version])).rows[0];
+        if (!card || !pointIds.length || pointIds.some(id => !card.points.some(point => point.id === id))) {
+          throw new HttpError(400, 'invalid_question', ['编题依据须引用该主题知识卡的有效版本和要点。']);
+        }
+      }
       if (content.parentId) {
         const parent = (await client.query<Raw>(publishedSelect + ' AND q.id=$1', [content.parentId])).rows[0];
         if (!parent || parent.content.parentId || parent.content.topic !== content.topic) throw new HttpError(400, 'parent_not_published');

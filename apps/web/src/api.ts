@@ -13,6 +13,20 @@ const messages: Record<string, string> = {
   empty_question: '请至少填写题干或标题。', not_found: '内容不存在、未发布或已下架。', invalid_response: '请按当前题型填写有效答案。',
   empty_response: '请先留下你的回答。', invalid_request: '输入格式有误，请检查后重试。',
   password_changed: '密码已被另一项操作修改，请重新登录。',
+  invalid_goal: '请检查考试日期、每日时间和时区。',
+  study_goal_conflict: '备考目标已在另一台设备更新。请核对右侧的填写和最新目标，再决定是否提交。',
+  study_draft_conflict: '另一台设备已更新草稿。当前输入保留，请选择采用哪一份。',
+  practice_submission_conflict: '该提交编号已用于另一份作答，请重新提交。',
+  review_unavailable: '复练尚未到期、已完成或不可用，请回首页查看最新任务。',
+  invalid_review_focus: '请选择本题可用的复练要点，或确认已有文字作答。',
+  exam_pool_empty: '模拟题池暂时没有可用题目。已有草稿仍可继续。',
+  exam_revision_conflict: '这份答卷已在另一设备更新。请核对最新记录。',
+  exam_state_conflict: '这份答卷的状态已变化，请返回试卷库查看。',
+  exam_no_answers: '请至少回答一道题再交卷。',
+  exam_report_unavailable: '交卷或确认查看答案后，才有本次答卷记录。',
+  exam_invalid_score: '请检查分值上限，得分最多保留两位小数。',
+  exam_item_unanswered: '本题未作答，按 0 分计。',
+  exam_review_ineligible: '请从已评分的失分题中选择复练项。',
 };
 export class ApiError extends Error { constructor(public status: number, public code: string, issues?: string[]) { super(issues?.join('；') || messages[code] || '服务暂时不可用，请稍后重试。'); } }
 export const api = {
@@ -45,5 +59,5 @@ export async function loadBank(admin = false): Promise<BankItem[]> {
 export function groupBank(items: BankItem[]) {
   return items.filter(q => !q.parentId).map(q => ({ ...q, variants: items.filter(v => v.parentId === q.id) }));
 }
-const contentKeys = ['parentId','kind','topic','priority','title','prompt','max','sourceType','sourceUrl','explanation','multiple','choices','correctIds','correct','blanks','referenceAnswer','points'];
+const contentKeys = ['parentId','kind','topic','priority','title','prompt','max','sourceType','sourceUrl','explanation','multiple','choices','correctIds','correct','blanks','referenceAnswer','points','simulation','difficulty','knowledgeEvidence'];
 export function questionPayload(q: BankItem) { return Object.fromEntries(contentKeys.filter(key => q[key] !== undefined).map(key => [key, q[key]])); }

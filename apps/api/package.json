@@ -1,6 +1,6 @@
 {
   "name": "@beikao/api",
-  "version": "0.2.0-alpha.3",
+  "version": "0.4.0-alpha.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "migrate": "node --env-file-if-exists=../../.env --import tsx src/migrate.ts",
     "bootstrap": "node --env-file-if-exists=../../.env --import tsx src/bootstrap.ts",
     "reset-password": "node --env-file-if-exists=../../.env --import tsx src/reset-password.ts",
-    "seed-demo": "node --env-file-if-exists=../../.env --import tsx src/seed-demo.ts"
+    "seed-demo": "node --env-file-if-exists=../../.env --import tsx src/seed-demo.ts",
+    "seed-trial": "node --env-file-if-exists=../../.env --import tsx src/seed-trial.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.5",

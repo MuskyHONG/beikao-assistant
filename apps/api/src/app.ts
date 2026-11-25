@@ -2,6 +2,8 @@ import Fastify, { type FastifyError } from 'fastify';
 import type pg from 'pg';
 import { installAuth, type AuthOptions } from './auth.js';
 import { installQuestionRoutes } from './question-routes.js';
+import { installLearningRoutes } from './learning-routes.js';
+import { installExamRoutes } from './exam-routes.js';
 import { HttpError } from './errors.js';
 
 export interface Dependencies {
@@ -33,16 +35,21 @@ export function buildApp({ ready, version, logLevel = 'silent', pool, auth, trus
     }
   });
   app.get('/api/v1/version', async () => ({
-    name: 'beikao-assistant', version, stage: 'accounts-and-shared-bank',
-    capabilities: { authentication: !!pool, sharedQuestionBank: !!pool, cloudProgress: false, aiGrading: false },
+    name: 'beikao-assistant', version, stage: 'server-trial',
+    capabilities: { authentication: !!pool && !!auth, sharedQuestionBank: !!pool && !!auth, cloudProgress: !!pool && !!auth,
+      publishedKnowledge: !!pool && !!auth, cloudExamDrafts: !!pool && !!auth, cloudExamAttempts: !!pool && !!auth, aiGrading: false },
   }));
   if (pool && auth) app.register(async scope => {
     const { guard } = await installAuth(scope, pool, auth);
     installQuestionRoutes(scope, pool, guard);
+    installLearningRoutes(scope, pool, guard);
+    installExamRoutes(scope, pool, guard);
   });
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: 'not_found' }));
   app.setErrorHandler<FastifyError>((error, request, reply) => {
-    if (error instanceof HttpError) return reply.code(error.statusCode).send({ error: error.code, ...(error.issues ? { issues: error.issues } : {}) });
+    if (error instanceof HttpError) return reply.code(error.statusCode).send({ error: error.code,
+      ...(error.issues ? { issues: error.issues } : {}),
+      ...(error.currentRevision === undefined ? {} : { currentRevision: error.currentRevision }) });
     // Only the request identifier and generic error type go into production logs.
     request.log.error({ requestId: request.id, code: error.code ?? 'internal_error' }, 'Request failed');
     const status = error.statusCode && error.statusCode < 500 ? error.statusCode : 500;

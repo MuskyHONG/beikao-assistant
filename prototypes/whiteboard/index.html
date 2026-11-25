@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>备考有方 · 白板修订原型</title>
+<link rel="stylesheet" href="experience.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#/home">备考有方<span>把理解变成考场表达</span></a>
+    <div id="workspace-label" class="sidebar-label">学习空间</div>
+    <nav id="nav" aria-label="主导航"></nav>
+    <div id="sidebar-bottom" class="sidebar-bottom"></div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <span id="workspace"></span>
+      <div><span class="tag">白板修订原型</span><span id="identity" class="save-status"></span></div>
+    </header>
+    <div class="content">
+      <div id="breadcrumbs" class="breadcrumbs" aria-label="当前位置"></div>
+      <div id="app"></div>
+      <footer class="page-footer">教学内容与评分量表为原型示例，非官方试题或评分标准。</footer>
+    </div>
+  </main>
+</div>
+<div id="notice" class="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script>
+<script src="app.js" defer></script>
+</body>
+</html>

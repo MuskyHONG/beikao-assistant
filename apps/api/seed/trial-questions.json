@@ -1,0 +1,338 @@
+[
+  {
+    "id": "kb-A13-choice-1",
+    "parentId": "",
+    "kind": "choice",
+    "topic": "A13",
+    "priority": "S",
+    "title": "学校要把科学教育落实到课程，哪种安排更符合知识要点？",
+    "prompt": "学校要把科学教育落实到课程，哪种安排更符合知识要点？",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "依据知识卡「科学教育」的「探究课程」要点：课：完善课程，强化实验、探究、项目式、跨学科学习。",
+    "multiple": false,
+    "choices": [
+      {
+        "id": "A",
+        "text": "把课程全部改为背诵结论"
+      },
+      {
+        "id": "B",
+        "text": "强化实验、探究、项目式和跨学科学习"
+      },
+      {
+        "id": "C",
+        "text": "取消实验，只增加试卷训练"
+      },
+      {
+        "id": "D",
+        "text": "把探究过程排除在课程之外"
+      }
+    ],
+    "correctIds": [
+      "B"
+    ],
+    "simulation": true,
+    "difficulty": "basic",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A13-01",
+      "version": 1,
+      "pointIds": [
+        "a13-p1"
+      ]
+    }
+  },
+  {
+    "id": "kb-A03-choice-1",
+    "parentId": "",
+    "kind": "choice",
+    "topic": "A03",
+    "priority": "S",
+    "title": "学生发生危机且直接人身风险尚未解除。记录与报告人员已到位，现场负责人此时最先应补足哪项行动？",
+    "prompt": "学生发生危机且直接人身风险尚未解除。记录与报告人员已到位，现场负责人此时最先应补足哪项行动？",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "知识卡「学校危机与心理危机管理」· a03-p1：保：生命和人身安全优先，迅速控制直接风险。\n知识卡「学校危机与心理危机管理」· a03-p2：报：启动预案并按制度及时报告，保存必要信息。\n辨析：报告与信息保存对应“报”，不能替代风险未解除时的“保”。",
+    "multiple": false,
+    "choices": [
+      {
+        "id": "A",
+        "text": "迅速控制风险，优先保障生命和人身安全"
+      },
+      {
+        "id": "B",
+        "text": "启动预案并整理报告所需的必要信息"
+      },
+      {
+        "id": "C",
+        "text": "联动家长和心理专业资源"
+      },
+      {
+        "id": "D",
+        "text": "安排恢复支持与原因复盘"
+      }
+    ],
+    "correctIds": [
+      "A"
+    ],
+    "simulation": true,
+    "difficulty": "challenging",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A03-01",
+      "version": 1,
+      "pointIds": [
+        "a03-p1",
+        "a03-p2"
+      ]
+    }
+  },
+  {
+    "id": "kb-A03-choice-2",
+    "parentId": "",
+    "kind": "choice",
+    "topic": "A03",
+    "priority": "S",
+    "title": "危机现场已恢复秩序，师生和家长情绪基本稳定。下一阶段哪项安排最直接补足尚未完成的管理环节？",
+    "prompt": "危机现场已恢复秩序，师生和家长情绪基本稳定。下一阶段哪项安排最直接补足尚未完成的管理环节？",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "知识卡「学校危机与心理危机管理」· a03-p5：复：持续跟踪、恢复支持、复盘原因、完善制度和预案。\n知识卡「学校危机与心理危机管理」· a03-p4：稳：稳定学生、班级、教师和家长情绪，恢复秩序。\n辨析：稳定情绪属于“稳”；现场稳定后的持续恢复、复盘和改进属于“复”。",
+    "multiple": false,
+    "choices": [
+      {
+        "id": "A",
+        "text": "继续把工作重心放在稳定现场情绪和秩序"
+      },
+      {
+        "id": "B",
+        "text": "重新梳理现场风险的控制顺序"
+      },
+      {
+        "id": "C",
+        "text": "持续跟踪恢复，复盘原因并完善制度预案"
+      },
+      {
+        "id": "D",
+        "text": "集中确认联动人员的到位情况"
+      }
+    ],
+    "correctIds": [
+      "C"
+    ],
+    "simulation": true,
+    "difficulty": "challenging",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A03-01",
+      "version": 1,
+      "pointIds": [
+        "a03-p5",
+        "a03-p4"
+      ]
+    }
+  },
+  {
+    "id": "kb-A13-choice-2",
+    "parentId": "",
+    "kind": "choice",
+    "topic": "A13",
+    "priority": "S",
+    "title": "学校已经增加实验与项目式课程，但科学教育评价仍只比较笔试分数。下一步应优先改进什么？",
+    "prompt": "学校已经增加实验与项目式课程，但科学教育评价仍只比较笔试分数。下一步应优先改进什么？",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "知识卡「科学教育」· a13-p4：评：重探究过程、实践、问题解决和创新，不唯分数。\n知识卡「科学教育」· a13-p1：课：完善课程，强化实验、探究、项目式、跨学科学习。\n辨析：增加实验课程对应“课”，当前缺口是“评”，不能用活动数量替代评价改进。",
+    "multiple": false,
+    "choices": [
+      {
+        "id": "A",
+        "text": "继续增加实验和跨学科课程的数量"
+      },
+      {
+        "id": "B",
+        "text": "组织科学教师培训并引入专业力量"
+      },
+      {
+        "id": "C",
+        "text": "拓展科普场馆与高校科研资源"
+      },
+      {
+        "id": "D",
+        "text": "把探究过程、实践和问题解决纳入评价"
+      }
+    ],
+    "correctIds": [
+      "D"
+    ],
+    "simulation": true,
+    "difficulty": "challenging",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A13-01",
+      "version": 1,
+      "pointIds": [
+        "a13-p4",
+        "a13-p1"
+      ]
+    }
+  },
+  {
+    "id": "kb-A03-judgment-2",
+    "parentId": "",
+    "kind": "judgment",
+    "topic": "A03",
+    "priority": "S",
+    "title": "危机后的“稳定情绪、恢复秩序”和“持续跟踪、完善预案”在知识卡中属于同一个环节，前者完成即可认定后者完成。",
+    "prompt": "危机后的“稳定情绪、恢复秩序”和“持续跟踪、完善预案”在知识卡中属于同一个环节，前者完成即可认定后者完成。",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "知识卡「学校危机与心理危机管理」· a03-p5：复：持续跟踪、恢复支持、复盘原因、完善制度和预案。\n知识卡「学校危机与心理危机管理」· a03-p4：稳：稳定学生、班级、教师和家长情绪，恢复秩序。\n辨析：前者属于“稳”，后者属于“复”，不能相互替代。",
+    "correct": "错误",
+    "simulation": true,
+    "difficulty": "challenging",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A03-01",
+      "version": 1,
+      "pointIds": [
+        "a03-p5",
+        "a03-p4"
+      ]
+    }
+  },
+  {
+    "id": "kb-A13-judgment-2",
+    "parentId": "",
+    "kind": "judgment",
+    "topic": "A13",
+    "priority": "S",
+    "title": "学校开设实验、探究课程是在完善科学教育的“课”；把探究过程和实践表现纳入评价是在完善“评”。",
+    "prompt": "学校开设实验、探究课程是在完善科学教育的“课”；把探究过程和实践表现纳入评价是在完善“评”。",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "知识卡「科学教育」· a13-p4：评：重探究过程、实践、问题解决和创新，不唯分数。\n知识卡「科学教育」· a13-p1：课：完善课程，强化实验、探究、项目式、跨学科学习。\n辨析：课程安排和评价关注点分别对应两个要点。",
+    "correct": "正确",
+    "simulation": true,
+    "difficulty": "challenging",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A13-01",
+      "version": 1,
+      "pointIds": [
+        "a13-p4",
+        "a13-p1"
+      ]
+    }
+  },
+  {
+    "id": "kb-A03-fill-1",
+    "parentId": "",
+    "kind": "fill",
+    "topic": "A03",
+    "priority": "S",
+    "title": "根据「学校危机与心理危机管理」的知识要点，补全下句：联动家长、心理专业人员、{{1}}及必要部门。",
+    "prompt": "根据「学校危机与心理危机管理」的知识要点，补全下句：联动家长、心理专业人员、{{1}}及必要部门。",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "依据知识卡「学校危机与心理危机管理」的「多方协作」要点：联：联动家长、心理专业人员、医疗机构及必要部门。",
+    "blanks": [
+      {
+        "accepted": [
+          "医疗机构"
+        ]
+      }
+    ],
+    "simulation": true,
+    "difficulty": "basic",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A03-01",
+      "version": 1,
+      "pointIds": [
+        "a03-p3"
+      ]
+    }
+  },
+  {
+    "id": "kb-A13-fill-1",
+    "parentId": "",
+    "kind": "fill",
+    "topic": "A13",
+    "priority": "S",
+    "title": "根据「科学教育」的知识要点，补全下句：加强{{1}}，引入专业力量。",
+    "prompt": "根据「科学教育」的知识要点，补全下句：加强{{1}}，引入专业力量。",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "依据知识卡「科学教育」的「教师支持」要点：师：加强科学教师队伍，引入专业力量。",
+    "blanks": [
+      {
+        "accepted": [
+          "科学教师队伍"
+        ]
+      }
+    ],
+    "simulation": true,
+    "difficulty": "basic",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A13-01",
+      "version": 1,
+      "pointIds": [
+        "a13-p2"
+      ]
+    }
+  },
+  {
+    "id": "kb-A21-fill-1",
+    "parentId": "",
+    "kind": "fill",
+    "topic": "A21",
+    "priority": "S",
+    "title": "根据「教育数字化战略 + “人工智能+教育” + 学校数智化转型」的知识要点，补全下句：强化网络安全、数据安全、{{1}}、算法与人工智能伦理；同时关注数字鸿沟，避免技术扩大教育不均衡。",
+    "prompt": "根据「教育数字化战略 + “人工智能+教育” + 学校数智化转型」的知识要点，补全下句：强化网络安全、数据安全、{{1}}、算法与人工智能伦理；同时关注数字鸿沟，避免技术扩大教育不均衡。",
+    "max": 2,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "依据知识卡「教育数字化战略 + “人工智能+教育” + 学校数智化转型」的「安全伦理」要点：安：强化网络安全、数据安全、个人信息保护、算法与人工智能伦理；同时关注数字鸿沟，避免技术扩大教育不均衡。",
+    "blanks": [
+      {
+        "accepted": [
+          "个人信息保护"
+        ]
+      }
+    ],
+    "simulation": true,
+    "difficulty": "basic",
+    "knowledgeEvidence": {
+      "knowledgeId": "KP-A21-01",
+      "version": 1,
+      "pointIds": [
+        "a21-p7"
+      ]
+    }
+  },
+  {
+    "id": "A03-q1",
+    "parentId": "",
+    "kind": "short",
+    "topic": "A03",
+    "priority": "S",
+    "title": "学生出现自伤风险，学校如何处置？",
+    "prompt": "学生出现自伤风险，学校如何处置？",
+    "max": 5,
+    "sourceType": "教学编题",
+    "sourceUrl": "",
+    "explanation": "",
+    "referenceAnswer": "保：生命和人身安全优先，迅速控制直接风险。\n报：启动预案并按制度及时报告，保存必要信息。\n联：联动家长、心理专业人员、医疗机构及必要部门。\n稳：稳定学生、班级、教师和家长情绪，恢复秩序。\n复：持续跟踪、恢复支持、复盘原因、完善制度和预案。",
+    "points": [
+      "保：生命和人身安全优先，迅速控制直接风险。",
+      "报：启动预案并按制度及时报告，保存必要信息。",
+      "联：联动家长、心理专业人员、医疗机构及必要部门。",
+      "稳：稳定学生、班级、教师和家长情绪，恢复秩序。",
+      "复：持续跟踪、恢复支持、复盘原因、完善制度和预案。"
+    ],
+    "simulation": true
+  }
+]
