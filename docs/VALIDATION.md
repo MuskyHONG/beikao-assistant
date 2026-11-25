@@ -1,5 +1,11 @@
 # 验证记录
 
+## v0.4.0-alpha.1 发布验收 · 2026-11-25
+
+- 在本机通过版本一致性检查、20 项单元测试、前后端构建和 PostgreSQL 17.12 的 28 项集成测试。
+- GitHub Actions 验收分支提交 `03e1d85` 通过 Linux Docker Compose 构建、Nginx 代理健康检查、两组浏览器回归和备份恢复验收。CI 用 `pg_dump` 生成测试库备份，在第二套 Compose 栈用 `pg_restore` 恢复，再核对账号、学习目标、单题历史、未交卷草稿、原答、评分和复练。 [验收分支运行记录](https://github.com/MuskyHONG/beikao-assistant/actions/runs/45575005135)
+- 发布标签触发的复验及归档状态以 [GitHub Actions](https://github.com/MuskyHONG/beikao-assistant/actions) 和 [GitHub Releases](https://github.com/MuskyHONG/beikao-assistant/releases) 为准。用户的目标服务器需要部署后单独验收。
+
 ## 服务器试用版第三批 · 2026-11-25
 
 - 完成类型检查、20 项单元测试及前后端构建。在隔离 PostgreSQL 17.12 上通过 28 项集成测试。
