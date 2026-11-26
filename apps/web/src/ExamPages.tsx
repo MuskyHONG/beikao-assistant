@@ -37,7 +37,7 @@ export function ExamLibrary({ hasLegacy }: { hasLegacy: boolean }) {
       if (error instanceof ApiError && error.status === 409) retry();
     } finally { setBusy(false); }
   };
-  return <><ExamHeading title="模拟考试" sub="从实际可用的教学题库随机组卷。"><a className="button secondary" href="#/exams/records">答题记录</a></ExamHeading>
+  return <><ExamHeading title="模拟考试" sub="选择一套限时练习，交卷后再评阅与复盘。"><a className="button secondary" href="#/exams/records">答题记录</a></ExamHeading>
     <section className="panel exam-library"><h2>选择模拟时长</h2>
       <fieldset className="exam-tiers"><legend>推荐 {data.recommendedTier} 分钟档，可以自行切换</legend>
         {data.tiers.map(option => <label className="exam-tier" key={option.tierMinutes}>
@@ -60,7 +60,7 @@ export function ExamLibrary({ hasLegacy }: { hasLegacy: boolean }) {
         <button className={'button' + (data.draft ? ' secondary' : '')} disabled={busy || !plan.actual} onClick={() => void start()}>{busy ? '正在组卷…' : '开始新卷'}</button>
         {!plan.actual && <button className="button secondary" onClick={retry}>刷新可用题量</button>}
       </div>
-    </section>{hasLegacy && <a className="text-link exam-legacy-link" href="#/exams/legacy">查看这台设备的旧演示记录</a>}</>;
+    </section><section className="panel soft"><h3>成绩与复盘在哪里？</h3><p>交卷或选择纸笔自核后，可到答题记录查看。在线交卷可逐题评阅，纸笔自核可以导出答案、手填总分。</p></section>{hasLegacy && <a className="text-link exam-legacy-link" href="#/exams/legacy">查看这台设备的旧演示记录</a>}</>;
 }
 
 type Pending = { itemNo: number; response: string | null };
@@ -165,7 +165,7 @@ function ExamWorkspace({ initial, confirm }: { initial: ExamAttempt; confirm: bo
   const current = attempt.items.find(item => item.itemNo === attempt.currentItemNo) ?? attempt.items[0];
   const value = (item: ExamItem) => local?.itemNo === item.itemNo ? local.response : item.response;
   const answered = attempt.items.filter(item => isAnswered(item, value(item))).length;
-  const groups = [...new Set(attempt.items.map(questionType))];
+  const groups = [...new Set(attempt.items.map(item => item.kind))];
   const finish = async (mode: 'submit' | 'reveal') => {
     if (mode === 'reveal' && !window.confirm('查看答案将结束本次在线作答，并保存为一条纸笔自核记录。确认查看答案？')) return;
     setBusy(true); setProblem('');
@@ -217,9 +217,9 @@ function ExamWorkspace({ initial, confirm }: { initial: ExamAttempt; confirm: bo
   </section><aside className="stack"><section className="panel">
     <h2>本套答题卡</h2><p>已答 {answered} / {attempt.items.length} 题 · <Elapsed {...attempt} /></p>
     <progress className="exam-progress" aria-label="本套答题完成度" max={attempt.items.length} value={answered} />
-    {groups.map(label => <section className="exam-sheet-group" key={label}><h3>{label} <small>{attempt.items.filter(item => questionType(item) === label).length} 道</small></h3>
-      <div className="answer-sheet">{attempt.items.filter(item => questionType(item) === label).map(item => <button type="button" key={item.itemNo}
-        aria-current={item.itemNo === current.itemNo ? 'step' : undefined} aria-label={`第 ${item.itemNo} 题，${label}，${isAnswered(item, value(item)) ? '已答' : '未答'}`}
+    {groups.map(kind => <section className="exam-sheet-group" key={kind}><h3>{kindLabel[kind]} <small>{attempt.items.filter(item => item.kind === kind).length} 道</small></h3>
+      <div className="answer-sheet">{attempt.items.filter(item => item.kind === kind).map(item => <button type="button" key={item.itemNo}
+        aria-current={item.itemNo === current.itemNo ? 'step' : undefined} aria-label={`第 ${item.itemNo} 题，${questionType(item)}，${isAnswered(item, value(item)) ? '已答' : '未答'}`}
         className={`${item.itemNo === current.itemNo ? 'current' : ''} ${isAnswered(item, value(item)) ? 'answered' : ''}`}
         disabled={busy || !!conflict} onClick={() => void draft.flush(item.itemNo)}>{item.itemNo}</button>)}</div></section>)}
     <button className="button" disabled={busy || !!conflict} onClick={() => void jump('/exams/confirm/' + attempt.id)}>查看交卷清单</button>

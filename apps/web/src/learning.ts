@@ -15,7 +15,7 @@ export interface StudyAttempt {
   question: { prompt: string; title: string; kind: string; max: number; choices: { id: string; text: string }[] };
 }
 interface StudyState {
-  goal: StudyGoal | null; day: string; timezone: string; reviews: ReviewTask[]; completedToday: number;
+  goal: StudyGoal | null; day: string; timezone: string; reviews: ReviewTask[]; completedToday: number; completedReviews?: { id: string; topic: string; questionId: string }[];
   mastery: { questionId: string; questionVersion: number; status: StudyAttempt['rating'] | 'pending'; updatedAt: string }[];
 }
 

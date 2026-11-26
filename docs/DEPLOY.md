@@ -2,6 +2,8 @@
 
 适用于 Linux + Docker Engine + Compose v2 或 Windows Docker Desktop 的 Linux 容器模式。账号初始化工具需要 Python 3。以下拉取示例适用于 `v0.4.0-alpha.1` 试用标签发布后，实际可用标签以 GitHub Releases 为准。
 
+当前工作区的原型 2.25 前端对齐版尚未标记为新发布。部署合入该更改的源码时同时更新 web 和 api，错题集读取账号接口。已有数据库卷可继续使用，本次没有新增 SQL 迁移。
+
 ## 首次拉取与启动
 
 以下命令在服务器Linux Bash终端执行，账号须有Docker权限。先检查工具：

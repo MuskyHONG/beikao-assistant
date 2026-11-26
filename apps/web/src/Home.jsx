@@ -1,91 +1,168 @@
 import React, { useEffect, useState } from 'react';
 import { calculateBudget, recommendPlan } from './studyPlan.js';
 import { nextReviewQuestion } from './learning';
-import { topics } from './data.js';
+import { ExamDatePicker } from './ExamDatePicker';
+import { Mascot } from './Mascot';
 
 const number = n => new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(n);
-const prettyDate = value => value ? value.replace(/-/g, ' / ') : '尚未设置';
-const go = path => { location.hash = path; };
+const prettyDate = value => value.replaceAll('-', ' / ');
+const hours = value => value === .5 ? '30 分钟' : number(value) + ' 小时';
+const tiers = [
+  { id: 'compact', label: '精简备考', range: '少于 20 小时 · 优先复习 S 级', priorities: ['S'] },
+  { id: 'balanced', label: '均衡备考', range: '20 至不足 60 小时 · 覆盖 S / A 级', priorities: ['S', 'A'] },
+  { id: 'systematic', label: '系统备考', range: '60 小时及以上 · 覆盖 S / A / B 级', priorities: ['S', 'A', 'B'] },
+];
+const localDay = (time, timezone) => new Intl.DateTimeFormat('sv-SE', { timeZone: timezone, dateStyle: 'short' }).format(new Date(time));
+const questionLink = id => '#/practice/question/' + encodeURIComponent(id);
 
-export function Home({ goal, legacyGoal, study, groups, onSave, practice }) {
+function dailyTasks({ study, groups, topics, budget, tier }) {
+  const taskItems = [];
+  const used = new Set();
+  const byTopic = new Map(topics.map(topic => [topic.id, topic]));
+  const questions = groups.flatMap(group => [group, ...group.variants]);
+  const todayMarks = new Map(study.mastery.filter(mark => mark.status !== 'pending' && localDay(mark.updatedAt, study.timezone) === study.day)
+    .map(mark => [mark.questionId, mark.questionVersion]));
+  const due = study.reviews.filter(task => task.dueOn <= study.day);
+  let minutes = budget.studyDays ? budget.dailyMinutes : 0;
+
+  for (const task of study.completedReviews || []) {
+    if (used.has(task.topic)) continue;
+    const question = questions.find(item => item.id === task.questionId) || groups.find(item => item.topic === task.topic);
+    const title = byTopic.get(task.topic)?.title || question?.title || task.topic;
+    taskItems.push({ id: task.id, title, minutes: 8, done: true, href: question ? questionLink(question.id) + '?from=home' : '#/practice/history' });
+    used.add(task.topic);
+    minutes = Math.max(0, minutes - 8);
+  }
+  for (const task of due) {
+    const question = nextReviewQuestion(task, groups);
+    if (!question || minutes < 8 || used.has(task.topic)) continue;
+    taskItems.push({ id: task.id, title: byTopic.get(task.topic)?.title || question.title, minutes: 8,
+      note: task.focus ? '待补 · ' + task.focus : task.sourceExamId ? '来自模拟复盘' : '到期复练',
+      href: questionLink(question.id) + '/review/' + encodeURIComponent(task.id) });
+    used.add(task.topic);
+    minutes -= 8;
+  }
+
+  const priorities = tier?.priorities || [];
+  const candidates = [
+    ...questions.filter(q => todayMarks.get(q.id) === q.version),
+    ...priorities.flatMap(priority => groups.filter(q => (byTopic.get(q.topic)?.priority || 'S') === priority)),
+  ];
+  for (const question of candidates) {
+    if (minutes < 8 || used.has(question.topic)) continue;
+    const done = todayMarks.get(question.id) === question.version;
+    const duration = Math.min(minutes, 30);
+    taskItems.push({ id: question.id, title: byTopic.get(question.topic)?.title || question.title, minutes: duration,
+      done, href: questionLink(question.id) + '?from=home' });
+    used.add(question.topic);
+    minutes -= duration;
+  }
+  return taskItems;
+}
+
+export function Home({ goal, legacyGoal, study, groups, topics, onSave }) {
   const [examDate, setExamDate] = useState(goal?.examDate || '');
   const [dailyHours, setDailyHours] = useState(String(goal?.dailyHours || 1));
   const [includeExamDay, setIncludeExamDay] = useState(goal?.includeExamDay !== false);
   const [base, setBase] = useState(goal);
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false), [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const today = study.day, budget = calculateBudget(goal, today);
-  const validTasks = study.reviews.map(task => ({ task, question: nextReviewQuestion(task, groups) })).filter(row => row.question);
-  const due = validTasks.filter(({task}) => task.dueOn <= today);
-  const available = budget.studyDays ? Math.max(0, budget.dailyMinutes - Math.max(0, study.completedToday) * 8) : 0;
-  const dueToday = due.slice(0, Math.floor(available / 8));
-  const later = validTasks.find(({task}) => task.dueOn > today);
-  const remaining = available - 8 * dueToday.length;
-  const plan = recommendPlan({ ...budget, dailyMinutes: remaining });
-  const hasGoal = budget.status !== 'unset' && budget.status !== 'invalid';
+  const plan = recommendPlan(budget);
+  const tasks = dailyTasks({ study, groups, topics, budget, tier: tiers.find(item => item.id === plan?.tier) });
+  const done = tasks.filter(task => task.done).length;
+  const later = study.reviews.filter(task => task.dueOn > today).find(task => nextReviewQuestion(task, groups));
   const dirty = examDate !== (base?.examDate || '') || Number(dailyHours) !== Number(base?.dailyHours || 1) || includeExamDay !== (base?.includeExamDay !== false);
   const changedRemotely = (base?.revision ?? 0) !== (goal?.revision ?? 0);
-  const useLatest = () => { setBase(goal); setExamDate(goal?.examDate || ''); setDailyHours(String(goal?.dailyHours || 1)); setIncludeExamDay(goal?.includeExamDay !== false); setError(''); };
+  const useLatest = () => {
+    setBase(goal); setExamDate(goal?.examDate || ''); setDailyHours(String(goal?.dailyHours || 1));
+    setIncludeExamDay(goal?.includeExamDay !== false); setError('');
+  };
   useEffect(() => { if (changedRemotely && !dirty && !saving) useLatest(); }, [goal, changedRemotely, dirty, saving]);
-  const save = async e => {
-    e.preventDefault();
+
+  const save = async event => {
+    event.preventDefault();
     if (saving || changedRemotely) return;
     const value = { examDate, dailyHours: Number(dailyHours), includeExamDay };
     const result = calculateBudget(value, today);
-    if (['unset', 'invalid'].includes(result.status)) return setError('请填写有效考试日期和每日复习时长。');
+    if (['unset', 'invalid'].includes(result.status)) return setError('请选择有效的考试日期和每日复习时长。');
     if (result.status === 'past') return setError('考试日期已过，请选择今天或之后的日期。');
-    setError(''); setSaving(true); setSaved(false);
-    try { setBase(await onSave(value, base?.revision ?? 0)); setSaved(true); }
+    setError(''); setSaving(true);
+    try { setBase(await onSave(value, base?.revision ?? 0)); setEditing(false); }
     catch (error) { setError(error.message); }
     finally { setSaving(false); }
   };
-  const weak = Object.values(practice).filter(x => ['weak', 'fuzzy'].includes(x.status)).length;
-  return <>
-    <div className="page-heading"><div><h1>把剩下的时间，安排得更清楚</h1><p>设定考试目标，看看你还有多少时间可以用于备考。</p></div><span className="tag">首页</span></div>
-    <section className="countdown-layout" aria-label="考试倒计时与时间设置">
-      <div className="countdown-hero">
-        <div className="countdown-top"><span className="eyebrow">我的备考时间</span><span>今天 {prettyDate(today)}</span></div>
-        <div className="countdown-title"><span>目标考试日</span><strong>{prettyDate(goal?.examDate)}</strong></div>
-        <div className="countdown-metrics" aria-live="polite">
-          <div><span>{budget.status === 'past' ? '考试日期已过' : budget.status === 'today' ? '考试就在今天' : '距离考试'}</span><strong>{hasGoal && budget.status !== 'past' ? budget.daysUntil : '—'}<small>{hasGoal && budget.status !== 'past' ? '天' : ''}</small></strong></div>
-          <div><span>预计可用于备考</span><strong>{hasGoal ? number(budget.totalHours) : '—'}<small>{hasGoal ? '小时' : ''}</small></strong></div>
-        </div>
-        {hasGoal ? <div className="budget-formula">
-          <strong>{budget.studyDays} 个可备考日 × 每天 {number(budget.dailyHours)} 小时 = {number(budget.totalHours)} 小时</strong>
-          <p>{budget.status === 'past' ? '请更新右侧考试日期，重新安排备考。' : `按日估算，包含今天${goal.includeExamDay !== false ? '和考试当天' : '，不包含考试当天'}；今天按一整天计。`}</p>
-          <p>这是计划可用时数，不是已完成的学习时数。</p>
-        </div> : <div className="budget-formula"><strong>先设日期，再看时间预算</strong><p>填写右侧考试日期和每日时长后，这里会自动计算。</p></div>}
+
+  return <div className="study-home">
+    <div className="home-heading">
+      <div><p className="home-date">{new Date(today + 'T12:00:00').toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
+        <div className="page-heading"><div><h1>备考概览</h1><p>{goal ? '看清备考节奏，从今天的任务开始。' : '用考试日期和每天可用时间，安排第一天学什么、练什么。'}</p></div></div>
       </div>
-      <form className="panel goal-form" onSubmit={save}>
-        <h2>{goal ? '调整备考目标' : '设置备考目标'}</h2>
-        {!goal && legacyGoal?.examDate && !dirty && <button type="button" className="button secondary small" onClick={() => { setExamDate(legacyGoal.examDate); setDailyHours(String(legacyGoal.dailyHours || 1)); setIncludeExamDay(legacyGoal.includeExamDay !== false); }}>带入本机旧目标</button>}
-        <label htmlFor="exam-date">考试日期<input id="exam-date" type="date" required min={today} value={examDate} onChange={e => { setExamDate(e.target.value); setError(''); }} /></label>
-        <label htmlFor="daily-hours">每天可用于复习<select id="daily-hours" value={dailyHours} onChange={e => setDailyHours(e.target.value)}>{[.5, 1, 1.5, 2, 3, 4].map(h => <option value={h} key={h}>{h === .5 ? '30 分钟' : h + ' 小时'} / 天</option>)}</select></label>
-        <label className="check-line"><input type="checkbox" checked={includeExamDay} onChange={e => setIncludeExamDay(e.target.checked)} /><span>计入考试当天的复习时间</span></label>
-        {error && <p role="alert" className="warning-copy">{error}</p>}
-        {changedRemotely && dirty && <div className="button-row"><button type="button" className="button secondary small" onClick={useLatest}>采用服务器目标</button><button type="button" className="button secondary small" onClick={() => { setBase(goal); setError(''); }}>保留当前填写</button></div>}
-        <button type="submit" className="button" disabled={saving || changedRemotely}>{saving ? '正在保存…' : goal ? '更新并重新计算' : '保存并计算'}</button>
-        <p className="small-copy muted">{dirty && goal ? '有未保存的修改，点击更新后生效。' : '目标按账号保存，可在其他设备恢复。'}</p>
-        {saved && !dirty && <p role="status">备考目标已同步。</p>}
-      </form>
+      <div className="home-art" aria-hidden="true"><Mascot animal="octopus" /></div>
+    </div>
+
+    <section className="home-budget" aria-label="备考时间">
+      <div className={'panel budget-hero' + (plan?.examSoon ? ' budget-soon' : '')}>
+        <div className="exam-countdown"><h2>距离考试</h2>
+          <div className="exam-alarm"><i className="alarm-bells" aria-hidden="true" /><i className="alarm-feet" aria-hidden="true" />
+            <p className="alarm-face">{!goal ? '—' : budget.status === 'past' ? '已过期' : budget.status === 'today' ? '考试今天' : <><b>{budget.daysUntil}</b><small>天</small></>}</p>
+          </div>
+        </div>
+        <div className="budget-info"><dl>
+          <div><dt>目标考试日</dt><dd>{goal ? <time dateTime={goal.examDate}>{prettyDate(goal.examDate)}</time> : '待设置'}</dd></div>
+          <div><dt>每日复习时间</dt><dd>{goal ? hours(goal.dailyHours) : '—'}</dd></div>
+        </dl>{goal && !editing && <button className="button secondary" onClick={() => setEditing(true)}>调整目标</button>}</div>
+      </div>
     </section>
-    <section className="panel plan-recommendation" aria-label="到期复练">
-      <div className="plan-heading"><h2>到期复练</h2><a className="button secondary small" href="#/practice/history">查看练习历史</a></div>
-      {study.completedToday > 0 && <p className="small-copy muted">今天已复练 {study.completedToday} 项</p>}
-      {dueToday.length ? <ul className="cloud-review-list">{dueToday.map(({ task, question }) => <li key={task.id}>
-        <a href={'#/practice/question/' + encodeURIComponent(question.id) + '/review/' + task.id}><span><strong>{topics.find(item => item.id === task.topic)?.title || question.title}</strong><small>{task.focus ? '待补 · ' + task.focus : task.sourceExamId ? '来自模拟复盘' : '上次回忆需要巩固'}</small></span><span>约 8 分钟</span></a>
-      </li>)}</ul> : <p>{due.length ? budget.studyDays ? '今天的复练时段已用完，待复练会继续保留。' : '设置有效的备考目标后可将复练排入今天。' : '今天暂无到期复练。选「想不起来」或「有点模糊」后会排入后续日期。'}</p>}
-      {dueToday.length > 0 && due.length > dueToday.length && <p className="small-copy muted">还有 {due.length - dueToday.length} 项待安排，会保留到后续日期。</p>}
-      {later && <p className="small-copy muted">下一项复练 {prettyDate(later.task.dueOn)} · {topics.find(item => item.id === later.task.topic)?.title || later.question.title}{later.task.sourceExamId && ' · 来自模拟复盘'}</p>}
-      {study.reviews.length > validTasks.length && <p className="small-copy muted">部分复练的关联题暂未发布，题目可用后会重新显示。</p>}
-    </section>
-    {plan && remaining > 0 ? <section className="panel plan-recommendation" aria-label="备考任务强度建议">
-      <div className="plan-heading"><div><span className="eyebrow">按时间预算推荐</span><h2>{plan.name}<span className="tag">{plan.scope}</span></h2></div><strong>其他学习安排 {remaining} 分钟</strong></div>
-      <p>{plan.desc}</p>
-      {plan.examSoon && <p className="exam-soon">距离考试不超过 7 天，优先复习与输出，减少新内容。</p>}
-      <div className="daily-task-grid">{plan.tasks.map(t => <article key={t.title}><span>{t.minutes} 分钟</span><h3>{t.title}</h3><p>{t.desc}</p><button className="text-button" onClick={() => go(t.path)}>去{t.title === '理解知识' ? '知识学习' : '题目练习'}</button></article>)}</div>
-      <details className="plan-basis"><summary>这个建议怎么算的？</summary><p>当前按总可用时数分档：少于 20 小时为精简备考，20 至不足 60 小时为均衡备考，60 小时起为系统备考。每日分钟数按你设置的时间分配。此规则用于原型体验，后续可结合考点覆盖、掌握情况和实际完成速度调整。</p></details>
-    </section> : !plan && <section className="panel soft"><h2>{hasGoal ? '先更新目标，再安排任务' : '让任务安排有一个时间依据'}</h2><p>{hasGoal && budget.status === 'today' ? '今天就是考试日，当前未计入考试当天，因此可用时数为 0。你仍可以按需进入知识学习或题目练习。' : hasGoal ? '考试日期已过，更新后即可重新计算时间与任务建议。' : '设置目标后，首页会根据总可用时数推荐学习范围，并把每天的时间分配给理解、提取、训练与自评。'}</p></section>}
-    <div className="home-links"><button className="panel" onClick={() => go('/knowledge')}><span className="eyebrow">知识学习</span><h3>从知识地图进入主题</h3><p>理解本质、故事和记忆支点</p></button><button className="panel" onClick={() => go('/practice/weak')}><span className="eyebrow">题目练习</span><h3>{weak} 道原题或变式需要巩固</h3><p>按掌握状态挑选薄弱题</p></button><button className="panel" onClick={() => go('/exams')}><span className="eyebrow">模拟考试</span><h3>限时练习与答题记录</h3><p>整套作答，再进入评阅与复盘</p></button></div>
-  </>;
+
+    {(editing || !goal) && <form className="panel goal-form" onSubmit={save}>
+      <h2>{goal ? '调整备考目标' : '设置备考目标'}</h2>
+      {!goal && legacyGoal?.examDate && !dirty && <button type="button" className="button secondary small"
+        onClick={() => { setExamDate(legacyGoal.examDate); setDailyHours(String(legacyGoal.dailyHours || 1)); setIncludeExamDay(legacyGoal.includeExamDay !== false); }}>带入本机旧目标</button>}
+      <ExamDatePicker value={examDate} today={today} onChange={date => { setExamDate(date); setError(''); }} />
+      <label htmlFor="daily-hours">每天可用于复习<select id="daily-hours" value={dailyHours} onChange={event => setDailyHours(event.target.value)}>
+        {[.5, 1, 1.5, 2, 3, 4].map(h => <option value={h} key={h}>{hours(h)} / 天</option>)}</select></label>
+      <label className="check-line"><input type="checkbox" checked={includeExamDay} onChange={event => setIncludeExamDay(event.target.checked)} />
+        <span>计入考试当天的复习时间</span></label>
+      {error && <p className="warning-copy" role="alert">{error}</p>}
+      {changedRemotely && dirty && <div className="button-row">
+        <button type="button" className="button secondary small" onClick={useLatest}>采用服务器目标</button>
+        <button type="button" className="button secondary small" onClick={() => { setBase(goal); setError(''); }}>保留当前填写</button>
+      </div>}
+      <button type="submit" className="button" disabled={saving || changedRemotely}>{saving ? '正在保存…' : goal ? '更新备考计划' : '保存目标'}</button>
+      {goal ? <button type="button" className="button secondary" disabled={saving} onClick={() => { useLatest(); setEditing(false); }}>取消调整</button>
+        : <p className="small-copy muted">目标按账号保存，可随时调整。</p>}
+    </form>}
+
+    <div className="home-study-grid">
+      <section className="panel home-today" aria-labelledby="today-task-heading">
+        <header className="task-meter"><h2 id="today-task-heading">今日任务</h2>
+          {tasks.length > 0 && <div className="task-completion"><progress aria-label="今日任务完成度" max={tasks.length} value={done} />
+            <span>{done} / {tasks.length} 项已练</span></div>}
+        </header>
+        {tasks.length ? <ul className="home-task-list">{tasks.map(task => <li key={task.id}>
+          <a className={'home-task-link' + (task.done ? ' is-done' : '')} href={task.href}>
+            <div><strong>{task.title}</strong>{task.note && <small>{task.note}</small>}</div><span>{task.minutes} 分钟</span>
+          </a></li>)}</ul> : <p>{!goal ? '设置备考目标后生成任务。' : budget.status === 'past' ? '考试日期已过，请调整目标。' : plan ? '暂无可安排题目。' : '当前没有可用的备考时间。'}</p>}
+        {later && <p className="small-copy muted home-next-review">下次复练 {prettyDate(later.dueOn)} · {topics.find(topic => topic.id === later.topic)?.title || later.topic}{later.sourceExamId && ' · 来自模拟复盘'}</p>}
+      </section>
+      <section className="panel home-plan"><header><h2>整体备考节奏</h2>
+        <p className="small-copy muted">{goal ? '预计可复习 ' + number(budget.totalHours) + ' 小时' : '设置目标后显示推荐档位'}</p></header>
+        <ol className="study-tiers">{tiers.map(tier => <li key={tier.id} aria-current={plan?.tier === tier.id ? 'true' : undefined}>
+          <div><strong>{tier.label}</strong><p>{tier.range}</p></div>{plan?.tier === tier.id && <span className="tier-tag">当前推荐</span>}
+        </li>)}</ol>
+        {plan?.examSoon && <p className="small-copy muted">临近考试，优先复练和输出。</p>}
+        <details className="study-scope"><summary>适用范围与推荐依据</summary>
+          {goal && <p>{budget.studyDays} 个备考日 × 每天 {number(goal.dailyHours)} 小时。{goal.includeExamDay ? '计入考试当天。' : '考试当天不计入。'}</p>}
+          <p>当前内容用于教育管理案例备考。S / A / B 来自现有教学整理，结合可用时长推荐学习范围。</p>
+        </details>
+      </section>
+    </div>
+
+    <section className="home-explore"><h2>按需学习</h2><div className="home-links">
+      <a className="panel card-motion" href="#/framework"><h3>陌生案例入门</h3><p>读题、搭框架、写具体行动</p></a>
+      <a className="panel card-motion" href="#/exams"><h3>模拟考试</h3><p>整套作答并复盘</p></a>
+    </div></section>
+  </div>;
 }

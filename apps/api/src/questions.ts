@@ -91,7 +91,7 @@ export function learnerQuestion(q: QuestionRow) {
   // Explicit whitelist. Internal keys/reference answers cannot reach pre-answer responses.
   return { id: q.id, parentId: q.parentId, kind: q.kind, type: { choice: '选择', judgment: '判断', fill: '填空', short: '简答' }[q.kind],
     topic: q.topic, priority: q.priority, title: q.title, prompt: q.prompt, max: q.max, sourceType: q.sourceType,
-    sourceUrl: q.sourceUrl, version: q.version, status: 'published', multiple: q.multiple,
+    difficulty: q.difficulty ?? null, sourceUrl: q.sourceUrl, version: q.version, status: 'published', multiple: q.multiple,
     choices: q.kind === 'choice' ? q.choices : [], blanks: q.kind === 'fill' ? q.blanks.map(() => ({ accepted: [] })) : [], points: [],
   };
 }

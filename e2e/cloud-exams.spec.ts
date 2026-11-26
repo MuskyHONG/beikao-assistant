@@ -162,10 +162,11 @@ test('learner completes server exams and exports consistent A4 documents', async
     await expect(priorityCard).toBeVisible();
     await screenshot(b, 'p04-server-knowledge', [priorityCard, b.getByRole('link', { name: '打印或下载知识提纲' })]);
     await priorityCard.click();
-    const crisis = b.locator('details').filter({ hasText: /A03 · 学校危机与心理危机管理/ });
-    await crisis.locator('summary').click();
+    const crisis = b.locator('.topic-group').filter({ has: b.getByText('学校危机与心理危机管理',{ exact: true }) });
+    await crisis.locator(':scope > summary').click();
+    await crisis.locator('.recall-point').first().click();
     await expect(crisis.getByText('生命和人身安全优先', { exact: false })).toBeVisible();
-    await screenshot(b, 'p05-server-knowledge', [b.getByRole('progressbar', { name: '知识主题掌握进度' }), crisis.locator('summary'), crisis.locator('.knowledge-points')]);
+    await screenshot(b, 'p05-server-knowledge', [b.getByRole('progressbar', { name: '本级主题进度' }), crisis.locator(':scope > summary'), crisis.locator('.recall-summary')]);
     await b.getByRole('link', { name: '打印或下载知识提纲' }).click();
     await b.getByLabel('关键词').fill('A03');
     await b.getByRole('button', { name: '应用筛选' }).click();

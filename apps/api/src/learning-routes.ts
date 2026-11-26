@@ -114,10 +114,10 @@ export function installLearningRoutes(app: FastifyInstance, pool: pg.Pool, guard
         WHERE v.user_id=$1 AND v.completed_attempt_id IS NULL ORDER BY v.due_on, v.id`, [actor.id]),
     ]);
     const day = await studyDay(pool, actor.id);
-    const [{ completedToday }] = (await pool.query<{ completedToday: number }>(`SELECT count(*)::integer AS "completedToday" FROM learning_reviews v
+    const { rows: completedReviews } = await pool.query(`SELECT v.id, v.topic, a.question_id AS "questionId" FROM learning_reviews v
       JOIN learning_attempts a ON a.user_id=v.user_id AND a.id=v.completed_attempt_id WHERE v.user_id=$1
-      AND timezone($2,a.submitted_at)::date=$3::date`, [actor.id, day.timezone, day.day])).rows;
-    return { goal: goal ?? null, mastery, reviews, completedToday, ...day };
+      AND timezone($2,a.submitted_at)::date=$3::date ORDER BY a.submitted_at, v.id`, [actor.id, day.timezone, day.day]);
+    return { goal: goal ?? null, mastery, reviews, completedToday: completedReviews.length, completedReviews, ...day };
   });
 
   app.put<{ Body: Goal }>('/api/v1/me/study-goal', { schema: { body: shape(['examDate', 'dailyHours', 'includeExamDay', 'timezone', 'revision'], {
@@ -186,6 +186,41 @@ export function installLearningRoutes(app: FastifyInstance, pool: pg.Pool, guard
     if (question.version !== request.body.version) throw new HttpError(409, 'question_updated');
     if (question.kind !== 'short') throw new HttpError(400, 'invalid_request');
     return { question };
+  });
+
+  app.get<{ Querystring: { source?: 'practice' | 'exam'; state?: 'todo' | 'done'; offset?: number } }>('/api/v1/me/wrong-questions', {
+    schema: { querystring: shape([], {
+      source: { type: 'string', enum: ['practice', 'exam'] }, state: { type: 'string', enum: ['todo', 'done'] },
+      offset: { type: 'integer', minimum: 0 },
+    }) },
+  }, async request => {
+    const actor = await guard(request), { source, state, offset = 0 } = request.query;
+    const result = await pool.query(`WITH events AS (
+      SELECT 'practice' AS source, a.id, a.question_id AS "questionId", a.question_version AS version,
+        r.content->>'topic' AS topic, r.content->>'kind' AS kind, r.content->>'prompt' AS prompt,
+        a.submitted_at AS "occurredAt", a.rating, (a.assessment->>'score')::float8 AS score,
+        (r.content->>'max')::float8 AS max, NULL::integer AS "itemNo",
+        EXISTS(SELECT FROM learning_reviews v WHERE v.user_id=$1 AND v.source_attempt_id=a.id AND v.completed_attempt_id IS NOT NULL) AS done
+      FROM learning_attempts a JOIN question_revisions r ON (r.question_id,r.version)=(a.question_id,a.question_version)
+      WHERE a.user_id=$1 AND (a.rating IN ('weak','fuzzy') OR (a.assessment->>'score')::numeric < (r.content->>'max')::numeric)
+        AND ($2::text IS NULL OR $2='practice')
+      UNION ALL
+      SELECT 'exam', a.id, i.question_id, i.question_version, i.topic_id, i.public_snapshot->>'kind', i.public_snapshot->>'prompt',
+        a.ended_at, NULL::text, coalesce(g.score,r.objective_score)::float8, (i.public_snapshot->>'max')::float8, i.item_no,
+        EXISTS(SELECT FROM learning_reviews v WHERE v.user_id=$1 AND (v.source_exam_id,v.source_exam_item_no)=(a.id,i.item_no)
+          AND v.completed_attempt_id IS NOT NULL)
+      FROM exam_attempts a JOIN exam_items i ON (i.user_id,i.attempt_id)=(a.user_id,a.id)
+      JOIN exam_answers r ON (r.user_id,r.attempt_id,r.item_no)=(i.user_id,i.attempt_id,i.item_no)
+      LEFT JOIN LATERAL (SELECT score FROM exam_grade_events g
+        WHERE (g.user_id,g.attempt_id,g.item_no)=(i.user_id,i.attempt_id,i.item_no) ORDER BY revision DESC LIMIT 1) g ON true
+      WHERE a.user_id=$1 AND a.state='submitted' AND r.response IS NOT NULL
+        AND coalesce(g.score,r.objective_score) < (i.public_snapshot->>'max')::numeric AND ($2::text IS NULL OR $2='exam')
+    ), latest AS (
+      SELECT DISTINCT ON (source,"questionId") *, count(*) OVER (PARTITION BY source,"questionId")::integer AS attempts
+      FROM events ORDER BY source,"questionId","occurredAt" DESC,id DESC,"itemNo" DESC
+    ) SELECT * FROM latest WHERE $3::boolean IS NULL OR done=$3
+      ORDER BY "occurredAt" DESC,source,"questionId" LIMIT 31 OFFSET $4`, [actor.id, source ?? null, state ? state === 'done' : null, offset]);
+    return { items: result.rows.slice(0, 30), next: result.rows.length > 30 ? offset + 30 : null };
   });
 
   app.get<{ Querystring: { before?: string } }>('/api/v1/me/practice-history', { schema: { querystring: shape([], { before: uuid }) } }, async request => {
