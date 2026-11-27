@@ -3,18 +3,30 @@ import rateLimit from '@fastify/rate-limit';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type pg from 'pg';
 import { HttpError } from './errors.js';
-import { csrfFor, digest, dummyPasswordHash, hashPassword, newToken, verifyPassword } from './passwords.js';
-import { createUser, type Role, type User, userColumns } from './accounts.js';
+import { csrfFor, digest, dummyPasswordHash, hashPassword, isNewPassword, newToken, verifyPassword } from './passwords.js';
+import { createUser, registerLearner, type Role, type User, userColumns } from './accounts.js';
 
 interface Context { user: User; token: string }
-export interface AuthOptions { origin: string; secureCookies: boolean; sessionHours: number }
+export interface AuthOptions { origin: string; shareOrigin?: string; secureCookies: boolean; sessionHours: number }
 const cookieName = 'beikao_session';
+const accountFields = {
+  email: { type: 'string', minLength: 3, maxLength: 254 },
+  displayName: { type: 'string', minLength: 1, maxLength: 80 },
+  password: { type: 'string', minLength: 1, maxLength: 128 },
+};
 export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: AuthOptions) {
   await app.register(cookie);
   await app.register(rateLimit, { global: false });
   const contexts = new WeakMap<FastifyRequest, Context>();
+  const primaryHost = new URL(options.origin).host;
+  const shareHost = options.shareOrigin ? new URL(options.shareOrigin).host : '';
+  const isShared = (request: FastifyRequest) => !!shareHost && request.headers.host?.toLowerCase() === shareHost;
   function requireOrigin(request: FastifyRequest) {
-    if (request.headers.origin !== options.origin || request.headers['sec-fetch-site'] === 'cross-site') throw new HttpError(403, 'invalid_origin');
+    const origin = isShared(request) ? options.shareOrigin : options.origin;
+    if ((shareHost && !isShared(request) && request.headers.host?.toLowerCase() !== primaryHost) ||
+        request.headers.origin !== origin || request.headers['sec-fetch-site'] === 'cross-site') {
+      throw new HttpError(403, 'invalid_origin');
+    }
   }
   async function authenticate(request: FastifyRequest): Promise<Context> {
     const cached = contexts.get(request);
@@ -24,6 +36,7 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
     const result = await pool.query<User>(`SELECT u.id, u.email, u.display_name AS "displayName", u.role, u.enabled
       FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now() AND u.enabled`, [digest(token)]);
     if (!result.rows[0]) throw new HttpError(401, 'unauthenticated');
+    if (isShared(request) && result.rows[0].role !== 'learner') throw new HttpError(403, 'forbidden');
     const value = { user: result.rows[0], token };
     contexts.set(request, value);
     return value;
@@ -37,7 +50,15 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
     }
     return context.user;
   }
-  const cookieOptions = { path: '/', httpOnly: true, sameSite: 'lax' as const, secure: options.secureCookies, maxAge: options.sessionHours * 3600 };
+  const cookieOptions = (request: FastifyRequest) => ({ path: '/', httpOnly: true, sameSite: 'lax' as const, secure: isShared(request) || options.secureCookies });
+  app.post<{ Body: { email: string; displayName: string; password: string } }>('/api/v1/auth/register', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+    schema: { body: { type: 'object', additionalProperties: false, required: ['email', 'displayName', 'password'], properties: accountFields } },
+  }, async (request, reply) => {
+    requireOrigin(request);
+    const user = await registerLearner(pool, request.body);
+    return reply.code(201).send({ email: user.email });
+  });
   app.post<{ Body: { email: string; password: string } }>('/api/v1/auth/login', {
     config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
     schema: { body: { type: 'object', required: ['email', 'password'], additionalProperties: false,
@@ -46,7 +67,9 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
     requireOrigin(request);
     const result = await pool.query<User & { password_hash: string }>(`SELECT ${userColumns}, password_hash FROM users WHERE email=$1`, [request.body.email.trim().toLowerCase()]);
     const row = result.rows[0];
-    if (!await verifyPassword(request.body.password, row?.password_hash ?? dummyPasswordHash) || !row?.enabled) throw new HttpError(401, 'invalid_credentials');
+    if (!await verifyPassword(request.body.password, row?.password_hash ?? dummyPasswordHash) || !row?.enabled || (isShared(request) && row.role !== 'learner')) {
+      throw new HttpError(401, 'invalid_credentials');
+    }
     const token = newToken();
     const client = await pool.connect();
     try {
@@ -59,7 +82,7 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
       await client.query('COMMIT');
     } catch (error) { await client.query('ROLLBACK'); throw error; }
     finally { client.release(); }
-    reply.setCookie(cookieName, token, cookieOptions);
+    reply.setCookie(cookieName, token, { ...cookieOptions(request), maxAge: options.sessionHours * 3600 });
     const { password_hash: _hash, ...user } = row;
     return { user, csrfToken: csrfFor(token) };
   });
@@ -70,16 +93,17 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
   app.post('/api/v1/auth/logout', async (request, reply) => {
     await guard(request);
     await pool.query('DELETE FROM sessions WHERE token_hash=$1', [digest((await authenticate(request)).token)]);
-    reply.clearCookie(cookieName, { path: '/', secure: options.secureCookies, httpOnly: true, sameSite: 'lax' });
+    reply.clearCookie(cookieName, cookieOptions(request));
     return { ok: true };
   });
   app.post<{ Body: { currentPassword: string; newPassword: string } }>('/api/v1/auth/password', {
     config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
     schema: { body: { type: 'object', required: ['currentPassword','newPassword'], additionalProperties: false, properties: {
-      currentPassword: { type: 'string', minLength: 1, maxLength: 128 }, newPassword: { type: 'string', minLength: 12, maxLength: 128 },
+      currentPassword: accountFields.password, newPassword: accountFields.password,
     } } },
   }, async (request, reply) => {
     const actor = await guard(request);
+    if (!isNewPassword(request.body.newPassword)) throw new HttpError(400, 'invalid_password');
     const original = (await pool.query<{ password_hash: string }>('SELECT password_hash FROM users WHERE id=$1', [actor.id])).rows[0].password_hash;
     if (!await verifyPassword(request.body.currentPassword, original)) throw new HttpError(401, 'invalid_credentials');
     const hash = await hashPassword(request.body.newPassword), client = await pool.connect();
@@ -93,7 +117,7 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
       await client.query('COMMIT');
     } catch (error) { await client.query('ROLLBACK'); throw error; }
     finally { client.release(); }
-    reply.clearCookie(cookieName, { path: '/', secure: options.secureCookies, httpOnly: true, sameSite: 'lax' });
+    reply.clearCookie(cookieName, cookieOptions(request));
     return { ok: true };
   });
   app.get('/api/v1/admin/users', async request => {
@@ -102,8 +126,7 @@ export async function installAuth(app: FastifyInstance, pool: pg.Pool, options: 
   });
   app.post<{ Body: { email: string; displayName: string; password: string; role: Role } }>('/api/v1/admin/users', {
     schema: { body: { type: 'object', additionalProperties: false, required: ['email','displayName','password','role'], properties: {
-      email: { type: 'string', maxLength: 254 }, displayName: { type: 'string', minLength: 1, maxLength: 80 },
-      password: { type: 'string', minLength: 12, maxLength: 128 }, role: { type: 'string', enum: ['learner','maintainer','admin'] },
+      ...accountFields, role: { type: 'string', enum: ['learner','maintainer','admin'] },
     } } },
   }, async (request, reply) => {
     const actor = await guard(request, ['admin']);

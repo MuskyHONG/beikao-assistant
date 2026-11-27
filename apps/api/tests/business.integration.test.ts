@@ -122,6 +122,35 @@ test('real PostgreSQL: accounts, CSRF, roles, immutable publishing and learner c
       const secure=buildApp({pool,auth:{origin:'https://test.local',secureCookies:true,sessionHours:24},ready:()=>checkDatabase(pool),version:'0.2.0-alpha.1'});
       try{const response=await secure.inject({method:'POST',url:'/api/v1/auth/login',headers:{origin:'https://test.local'},payload:{email:'password@example.test',password:newPassword}});assert.equal(response.statusCode,200);assert.match(response.headers['set-cookie'] as string,/; Secure/i);}finally{await secure.close();}
     });
+    await t.test('the shared HTTPS host admits learner accounts only and checks its matching origin', async () => {
+      const shareOrigin = 'https://shared.example.test';
+      const shareHost = new URL(shareOrigin).host;
+      const primaryHost = new URL(origin).host;
+      const shared = buildApp({ pool, auth: { origin, shareOrigin, secureCookies: false, sessionHours: 24 },
+        ready: () => checkDatabase(pool), version: 'test' });
+      try {
+        const root = await login('admin@example.test', '127.0.0.5');
+        const email = 'shared-learner@example.test';
+        const created = await app.inject({ method: 'POST', url: '/api/v1/admin/users', headers: headers(root),
+          payload: { email, displayName: 'Shared learner', password, role: 'learner' } });
+        assert.equal(created.statusCode, 201);
+        const authenticate = (who: string, host: string, from: string) => shared.inject({
+          method: 'POST', url: '/api/v1/auth/login', headers: { host, origin: from }, payload: { email: who, password },
+        });
+        const remote = await authenticate(email, shareHost, shareOrigin);
+        assert.equal(remote.statusCode, 200);
+        assert.match(remote.headers['set-cookie'] as string, /; Secure/i);
+        assert.equal((await authenticate(email, shareHost, origin)).statusCode, 403);
+        assert.equal((await authenticate(email, primaryHost, shareOrigin)).statusCode, 403);
+        assert.equal((await authenticate('admin@example.test', shareHost, shareOrigin)).statusCode, 401);
+        const local = await authenticate('admin@example.test', primaryHost, origin);
+        assert.equal(local.statusCode, 200);
+        assert.doesNotMatch(local.headers['set-cookie'] as string, /; Secure/i);
+        assert.equal((await shared.inject({ url: '/api/v1/auth/me', headers: {
+          host: shareHost, cookie: (local.headers['set-cookie'] as string).split(';')[0],
+        } })).statusCode, 403);
+      } finally { await shared.close(); }
+    });
     await t.test('login attempts are rate limited and use generic credential failures', async () => {
       for(let n=0;n<10;n++)assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/login',remoteAddress:'127.0.0.9',headers:{origin},payload:{email:'nonexistent@example.test',password:'bad'}})).statusCode,401);
       assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/login',remoteAddress:'127.0.0.9',headers:{origin},payload:{email:'nonexistent@example.test',password:'bad'}})).statusCode,429);

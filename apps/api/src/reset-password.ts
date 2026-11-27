@@ -1,12 +1,12 @@
 import { readConfig } from './config.js';
 import { createDatabase } from './database.js';
-import { hashPassword } from './passwords.js';
+import { hashPassword, isNewPassword } from './passwords.js';
 let input = '';
 for await (const chunk of process.stdin) { input += chunk; if (input.length > 4096) throw new Error('Input too large'); }
 const pool = createDatabase(readConfig(process.env).databaseUrl);
 try {
   const value = JSON.parse(input) as { email: string; password: string };
-  if (typeof value.email !== 'string' || typeof value.password !== 'string' || value.password.length < 12 || value.password.length > 128) throw new Error();
+  if (typeof value.email !== 'string' || typeof value.password !== 'string' || !isNewPassword(value.password)) throw new Error();
   const hash = await hashPassword(value.password), client = await pool.connect();
   try {
     await client.query('BEGIN');

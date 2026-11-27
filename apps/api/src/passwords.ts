@@ -2,6 +2,9 @@ import { randomBytes, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 
 // OWASP scrypt profile: N=2^16, r=8, p=2; bounded per-operation memory.
 const parameters = { N: 65536, r: 8, p: 2, maxmem: 128 * 1024 * 1024 };
+export function isNewPassword(password: string) {
+  return password.length >= 9 && password.length <= 128 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+}
 function derive(password: string, salt: string): Promise<Buffer> {
   return new Promise((resolve, reject) => scrypt(password, salt, 64, parameters, (error, key) => error ? reject(error) : resolve(key)));
 }

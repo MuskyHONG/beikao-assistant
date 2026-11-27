@@ -1,6 +1,14 @@
 # API现状与后续规划
 
-前缀/api/v1，同源JSON。除health/version外要求登录；写请求要求精确Origin和X-CSRF-Token。错误格式为{error,issues?}，不返回SQL/驱动内部错误。
+前缀 `/api/v1`，同源 JSON。健康检查、版本、登录及学员注册开放给匿名访问。登录和注册校验精确 Origin 并限速，登录后的写请求还要求 CSRF 令牌。错误格式为 `{error,issues?}`。
+
+## v0.4.0-alpha.2 学员注册
+
+| 方法和路径 | 权限 | 行为 |
+|---|---|---|
+| POST /auth/register | 同源、限速 | 接收 email、displayName、password。身份固定为 learner，成功返回 201 和规范化后的 email，随后由用户显式登录。 |
+
+新密码长度为 9–128 位，须包含大写字母、小写字母和数字。邮箱去除两端空白后转为小写并由数据库保证唯一；重复返回 `409 email_exists`。密码不合规返回 `400 invalid_password`。首次管理员初始化前返回 `503 registration_unavailable`。账号和审计记录在同一事务写入。登录继续校验原密码。
 
 ## v0.2已实现
 

@@ -1,8 +1,34 @@
 # 在自己的服务器部署
 
-适用于 Linux + Docker Engine + Compose v2 或 Windows Docker Desktop 的 Linux 容器模式。账号初始化工具需要 Python 3。以下拉取示例适用于 `v0.4.0-alpha.1` 试用标签发布后，实际可用标签以 GitHub Releases 为准。
+适用于 Linux + Docker Engine + Compose v2 或 Windows Docker Desktop 的 Linux 容器模式。账号初始化工具需要 Python 3。以下拉取示例使用 `main` 上的 `v0.4.0-alpha.2` 试用代码。
 
-当前工作区的原型 2.25 前端对齐版尚未标记为新发布。部署合入该更改的源码时同时更新 web 和 api，错题集读取账号接口。已有数据库卷可继续使用，本次没有新增 SQL 迁移。
+从现有试用版升级时同时更新 web 和 api。已有数据库卷、账号和学习记录可继续使用，本次没有新增 SQL 迁移。
+
+## Windows 本机试用与 cpolar 分发
+
+### 启动和停止本机试用站
+
+用此前部署时的 Windows 账号，打开工作区旁的 `本机试用-v0.4` 文件夹，双击 `Start-Beikao.cmd`。启动成功后会打开浏览器。脚本使用 Windows 自带的 PowerShell，并复用已安装的 Node.js、试用 PostgreSQL、账号与数据目录。
+
+也可在这个文件夹打开 PowerShell，运行以下命令。
+
+```powershell
+.\Start-Beikao.cmd -Action start
+.\Start-Beikao.cmd -Action status
+.\Start-Beikao.cmd -Action stop
+.\Start-Beikao.cmd -Rebuild
+```
+
+最后一条适用于拉取代码后需要重新构建的情况，会按锁文件安装依赖，启动时使用原来的试用库。普通启动直接使用已有构建。网页端口为 44328，登录信息文件在 `runtime/登录信息.txt`。
+
+### 通过 cpolar 分发
+
+本机试用网页使用 `127.0.0.1:44328`。cpolar 的备考专用隧道指向此端口，保留请求的 Host，并将 HTTP 跳转到 HTTPS。只把 HTTPS 地址发给试用人员。试用站的启动器读取 `本机试用-v0.4/runtime/share-origin.txt`，将其中的准确 HTTPS 地址设置为 `APP_SHARE_ORIGIN`。本机的 `APP_ORIGIN` 继续使用 `http://127.0.0.1:44328`。
+
+- 首位管理员初始化后，试用者打开公开 HTTPS 地址，从登录页选择「注册学员账号」。试用入口仅接受学员，并发放 Secure、HttpOnly 的会话 Cookie。维护和账号管理从本机入口登录。
+- 使用 ngrok 时，将固定域名转发到 `http://127.0.0.1:44328`，把完整 HTTPS 地址写入同一个 `runtime/share-origin.txt`，再重新启动试用站。
+- 共享题库使用同一个 PostgreSQL。个人目标、掌握度、草稿、答卷、错题和复练由登录会话确定账号 ID，接口按该 ID 读写。停用账号会同时撤销会话。
+- 随机地址变化后，在本机试用目录用此前部署时的 Windows 账号运行 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cpolar试用.ps1 -Action start`。已有可用入口时直接显示该网址。需要新入口时，脚本核验新地址、更新许可来源并重启试用服务。用 `-Action status` 查看当前地址，用 `-Action stop` 关闭备考专用隧道。
 
 ## 首次拉取与启动
 
@@ -20,7 +46,7 @@ python3 --version
 默认端口：本机开发网页43126，API43127；Docker部署仅将网页入口43128映射到宿主127.0.0.1。API和PostgreSQL不映射宿主端口。开发端口被占用会报错，不自动寻找其他端口。
 
 ```sh
-git clone --branch v0.4.0-alpha.1 --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
+git clone --branch main --depth 1 https://github.com/MuskyHONG/beikao-assistant.git
 cd beikao-assistant
 python3 - <<'PY'
 from pathlib import Path
@@ -73,13 +99,13 @@ beikao.example.com {
 
 ## 初始化管理员、题库和账号
 
-服务健康后执行以下命令，交互输入邮箱、显示姓名和至少12位密码；密码不会回显、进入命令参数或Shell历史。
+服务健康后执行以下命令，交互输入邮箱、显示姓名和密码。新密码至少 9 位且最多 128 位，须包含大写字母、小写字母和数字。密码通过标准输入传入。
 
 ```sh
 python3 scripts/account-input.py bootstrap | docker compose exec -T api node apps/api/dist/bootstrap.js
 ```
 
-只允许数据库还没有任何账号时执行；重复初始化拒绝覆盖已有管理员。随后通过APP_ORIGIN所配置的地址登录，进入题库维护端→账号管理开通学员/维护者。维护者可以发布内容，不能管理账号；学员访问维护接口会被服务器拒绝。账号停用和改密会撤销会话，默认会话有效168小时。
+首位管理员只在空账号库初始化一次。完成后，登录页开放学员自助注册，注册成功回到登录。维护者和管理员仍通过「题库维护端 → 账号管理」开通。账号停用和改密会撤销会话，默认会话有效 168 小时。
 
 题库初始为空。可自行录题，或在空题库导入已确认原型的11道教学样例（含变式，非官方试题）：
 
@@ -103,7 +129,7 @@ docker compose exec -T api node apps/api/dist/seed-trial.js
 python3 scripts/account-input.py reset | docker compose exec -T api node apps/api/dist/reset-password.js
 ```
 
-重置撤销该用户全部会话并记录server_cli审计。此版本不发送邀请邮件或密码重置邮件；登录后用户可通过右上角“修改密码”更换初始密码。
+重置使用同一套新密码规则，撤销该用户全部会话并记录审计。用户登录后可从个人菜单「修改密码」。忘记密码由管理员重置，目前无邮件找回。
 
 ## 实际运行验收与自动测试
 
@@ -143,16 +169,16 @@ docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -
 
 ## 更新到新版本
 
-从 `v0.2.0-alpha.3` 或个人学习开发版升级时，先备份原 PostgreSQL 数据库，保留原 `.env` 和 Compose 项目名。迁移服务会补齐未应用的迁移直至 `006_exam_results.sql`，账号、题库和已有学习记录随原数据库卷保留。`/api/v1/version` 应返回 `0.4.0-alpha.1`、阶段 `server-trial` 和 `cloudExamAttempts: true`。
+升级时先备份 PostgreSQL，保留原 `.env` 和 Compose 项目名。迁移服务会补齐未应用的迁移直至 `006_exam_results.sql`，账号、题库和已有学习记录随原数据库卷保留。`/api/v1/version` 应返回 `0.4.0-alpha.2`、阶段 `server-trial` 和 `cloudExamAttempts: true`。升级完成后，从登录页点「注册学员账号」，用新邮箱注册并重新登录。已有账号继续使用原密码。
 
-先备份数据库，阅读目标版本CHANGELOG并记录旧tag。保留已有.env，不再执行首次初始化命令。若升级自alpha.1，更新HTTP_PORT=43128，PORT=43127、WEB_DEV_PORT=43126；APP_ORIGIN仅在原本为本机旧地址时改为http://127.0.0.1:43128，已有HTTPS域名保持原域名。同步外层反向代理的上游端口，数据库密码不变。
+已初始化的部署直接拉取并重建。沿用现有站点地址、端口和数据库密码。
 
 ```sh
-git fetch origin --tags
-git checkout v0.4.0-alpha.1
+git switch main
+git pull --ff-only origin main
 ```
 
-切换到已发布的试用标签后执行下列命令。
+更新源代码后执行下列命令。
 
 ```sh
 docker compose build

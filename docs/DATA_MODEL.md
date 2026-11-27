@@ -10,7 +10,7 @@ question_publications保留曾发布版本；question_revisions触发器禁止UP
 
 | 表 | 核心字段/关联 | 约束及索引 |
 |---|---|---|
-| users | id、email、password_hash、role、enabled | email 规范化唯一；role 枚举约束；不存明文密码 |
+| users | id、email、password_hash、role、enabled | 邮箱去除两端空白后转小写并保持唯一。自助注册固定为 learner，密码保存 scrypt 哈希。 |
 | sessions | token_hash、user_id、expires_at | 摘要唯一，用户与过期索引；注销/停用立即撤销 |
 | learning_goals | user_id、exam_date、daily_hours、include_exam_day、timezone、revision | 每账号一份当前设置，限定每日时长，修订号检查并行修改 |
 | 知识主题与知识卡 | 见下文的主题登记、知识卡修订 | 题目与知识卡共用稳定主题号 |
@@ -22,7 +22,7 @@ question_publications保留曾发布版本；question_revisions触发器禁止UP
 | 服务器试用版答卷 | 见下文的试卷快照、作答和评分模型 | 一套随机卷对应一份账号答卷 |
 | policy_sources | id、title、issuer、source_url、published_on、verified_at、validity、status | 官方文件和新闻案例分型；来源可追溯；不得以 URL 自动表示核验通过 |
 | policy_links | source_id、question_id/version、anchor、addition、applicability、status、reviewer | 多对多关系；基础答案不变；审核状态和发布记录独立 |
-| audit_events | actor_id、entity_type/id、action、before_version、after_version、created_at | 追加记录；不存明文会话 token 或用户密码 |
+| audit_events | actor_id、entity_type/id、action、before_version、after_version、created_at | 新学员的 register 事件随账号同事务写入。审计字段保存操作人、实体与动作。 |
 
 ## 四种题型的公开字段与计分字段
 

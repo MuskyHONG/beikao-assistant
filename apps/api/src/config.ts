@@ -14,9 +14,16 @@ export function readConfig(env: NodeJS.ProcessEnv) {
   try { url = new URL(origin); if (!['http:','https:'].includes(url.protocol) || url.origin !== origin || url.username || url.password) throw new Error(); }
   catch { throw new Error('APP_ORIGIN must be an exact HTTP/HTTPS origin without a trailing slash'); }
   if (env.NODE_ENV === 'production' && url.protocol !== 'https:' && env.ALLOW_INSECURE_HTTP !== 'true') throw new Error('Production requires HTTPS APP_ORIGIN');
+  const shareOrigin = env.APP_SHARE_ORIGIN || undefined;
+  if (shareOrigin) {
+    try {
+      const shareUrl = new URL(shareOrigin);
+      if (shareUrl.protocol !== 'https:' || shareUrl.origin !== shareOrigin || shareUrl.host === url.host) throw new Error();
+    } catch { throw new Error('APP_SHARE_ORIGIN must be an exact HTTPS origin on a different host'); }
+  }
   const sessionHours = Number(env.SESSION_HOURS ?? 168), trustProxyHops = Number(env.TRUST_PROXY_HOPS ?? 0);
   if (!Number.isInteger(sessionHours) || sessionHours < 1 || sessionHours > 720) throw new Error('Invalid SESSION_HOURS');
   if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 5) throw new Error('Invalid TRUST_PROXY_HOPS');
   return { port, host: env.HOST ?? '127.0.0.1', databaseUrl, logLevel,
-    auth: { origin, secureCookies: url.protocol === 'https:', sessionHours }, trustProxyHops };
+    auth: { origin, shareOrigin, secureCookies: url.protocol === 'https:', sessionHours }, trustProxyHops };
 }

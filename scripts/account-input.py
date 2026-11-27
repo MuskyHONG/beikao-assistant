@@ -1,6 +1,7 @@
 """Build a one-line stdin payload without putting passwords in shell history."""
 import getpass
 import json
+import re
 import sys
 
 def ask(prompt):
@@ -13,8 +14,10 @@ if mode not in ("bootstrap", "reset"):
 value = {"email": ask("Email: ")}
 if mode == "bootstrap":
     value["displayName"] = ask("Display name: ")
-password = getpass.getpass("Password (12-128 characters): ")
-if not 12 <= len(password) <= 128 or getpass.getpass("Confirm password: ") != password:
-    raise SystemExit("Passwords must match and contain 12-128 characters")
+password = getpass.getpass("Password (9-128 characters, including A-Z, a-z and 0-9): ")
+if not 9 <= len(password.encode("utf-16-le")) // 2 <= 128 or not all(re.search(pattern, password) for pattern in ("[A-Z]", "[a-z]", "[0-9]")):
+    raise SystemExit("Password must contain 9-128 characters, including A-Z, a-z and 0-9")
+if getpass.getpass("Confirm password: ") != password:
+    raise SystemExit("Passwords must match")
 value["password"] = password
 print(json.dumps(value, ensure_ascii=False))

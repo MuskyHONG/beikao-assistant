@@ -1,3 +1,5 @@
+import { passwordRules } from './passwordRules';
+
 export interface User { id: string; email: string; displayName: string; role: 'learner' | 'maintainer' | 'admin'; enabled: boolean }
 export interface Session { user: User; csrfToken: string }
 export type BankItem = Record<string, any> & { id: string; parentId?: string; version: number; etag?: number };
@@ -9,7 +11,8 @@ const messages: Record<string, string> = {
   question_updated: '这道题已更新，请返回列表刷新。你原来的草稿仍保留在本机。', invalid_question: '题目尚未满足发布要求。',
   parent_not_published: '请先发布同一主题下的所属原题。', invalid_parent: '原题与变式归属无效，请检查主题与层级。',
   published_variants_conflict: '已发布的变式与本次原题修改不一致，请先调整或下架变式。',
-  email_exists: '该邮箱已存在。', invalid_account: '请检查邮箱、姓名和至少12位的密码。', cannot_disable_self: '不能停用自己的账号。',
+  email_exists: '该邮箱已注册，请登录或使用其他邮箱。', invalid_account: '请检查邮箱和显示姓名。', cannot_disable_self: '不能停用自己的账号。',
+  invalid_password: passwordRules, registration_unavailable: '暂时无法注册，请联系管理员。',
   empty_question: '请至少填写题干或标题。', not_found: '内容不存在、未发布或已下架。', invalid_response: '请按当前题型填写有效答案。',
   empty_response: '请先留下你的回答。', invalid_request: '输入格式有误，请检查后重试。',
   password_changed: '密码已被另一项操作修改，请重新登录。',
